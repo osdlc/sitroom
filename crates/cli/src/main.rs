@@ -777,7 +777,7 @@ fn cli_args(cli: &Cli) -> Vec<std::ffi::OsString> {
 }
 
 /// `--pick`: list the saved dashboards and set `--dashboard` (or
-/// `--no-dashboard`) from the choice. False: closed without choosing. With
+/// `--no-dashboard`) from the choice; `e` edits one's file first. False: closed without choosing. With
 /// no terminal it prints the list and returns false; with no saved
 /// dashboards there is nothing to choose, so it returns true.
 fn pick_dashboard(cli: &mut Cli) -> Result<bool> {
@@ -797,17 +797,32 @@ fn pick_dashboard(cli: &mut Cli) -> Result<bool> {
         dashboards::list(&sources, false)?;
         return Ok(false);
     }
-    let picker = sitroom_tui::Picker::new(
+    let registry = sources.registry()?;
+    let mut picker = sitroom_tui::Picker::new(
         saved.into_iter().map(|s| (s.name, s.description)),
         sources.dashboard_in_use().as_deref(),
     );
-    match sitroom_tui::pick_dashboard(picker)? {
-        sitroom_tui::PickOutcome::Open(name) => {
-            cli.no_dashboard = name.is_none();
-            cli.dashboard = name;
-            Ok(true)
+    picker.editable = true;
+    loop {
+        match sitroom_tui::pick_dashboard(&mut picker)? {
+            sitroom_tui::PickOutcome::Open(name) => {
+                cli.no_dashboard = name.is_none();
+                cli.dashboard = name;
+                return Ok(true);
+            }
+            // The file, in $VISUAL or $EDITOR, then the list again.
+            sitroom_tui::PickOutcome::Edit(name) => {
+                let path = match &name {
+                    Some(name) => registry.path(name)?,
+                    None => match &cli.config {
+                        Some(path) => path.clone(),
+                        None => sitroom_core::config::default_path()?,
+                    },
+                };
+                sitroom_tui::open_editor(&path.to_string_lossy())?;
+            }
+            sitroom_tui::PickOutcome::Cancel => return Ok(false),
         }
-        sitroom_tui::PickOutcome::Cancel => Ok(false),
     }
 }
 

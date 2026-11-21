@@ -884,7 +884,7 @@ fn draw_page(f: &mut Frame, app: &App, main: Rect, screen: &ScreenLayout, hits: 
 /// Run `$VISUAL` or `$EDITOR` (default `vi`, `notepad` on Windows) on the
 /// config file and wait. The variable may include arguments, e.g. `code -w`,
 /// or be the path of a program with spaces in it (`C:\Program Files\...`).
-fn open_editor(path: &str) -> Result<()> {
+pub fn open_editor(path: &str) -> Result<()> {
     let fallback = if cfg!(windows) { "notepad" } else { "vi" };
     let editor = std::env::var("VISUAL")
         .or_else(|_| std::env::var("EDITOR"))

@@ -1,6 +1,7 @@
 //! Choosing a saved dashboard: the list `sitroom --pick` shows before sitroom
 //! starts (`choose`), and the TUI's `d` overlay (`draw`). Both take the same
-//! keys: arrows or j/k move, Enter or a number opens, Esc or q closes.
+//! keys: arrows or j/k move, Enter or a number opens, Esc or q closes. The
+//! launch list also takes `e`, to edit the selected dashboard's file first.
 
 use std::io::Write;
 
@@ -41,6 +42,8 @@ impl Entry {
 pub enum Outcome {
     /// Open this dashboard (`None`: `config.yaml` alone).
     Open(Option<String>),
+    /// Edit this dashboard's file (`None`: `config.yaml`), then choose again.
+    Edit(Option<String>),
     /// Closed without choosing.
     Cancel,
 }
@@ -52,6 +55,8 @@ pub struct Picker {
     pub selected: usize,
     /// The entry in use, marked in the list.
     pub current: usize,
+    /// `e` edits the selected entry's file (the launch list).
+    pub editable: bool,
 }
 
 impl Picker {
@@ -80,6 +85,7 @@ impl Picker {
             entries,
             selected: current,
             current,
+            editable: false,
         }
     }
 
@@ -116,6 +122,9 @@ impl Picker {
                 }
             }
             KeyCode::Enter => return Some(self.open(self.selected)),
+            KeyCode::Char('e') if self.editable => {
+                return Some(Outcome::Edit(self.entries[self.selected].name.clone()));
+            }
             KeyCode::Esc | KeyCode::Char('q') => return Some(Outcome::Cancel),
             _ => {}
         }
@@ -161,10 +170,13 @@ impl Picker {
 
 /// The key line under the list.
 const KEYS: &str = "↑↓ move  Enter or 1-9 open  Esc close";
+/// The launch list's key line.
+const KEYS_EDIT: &str = "↑↓ move  Enter or 1-9 open  e edit  Esc quit";
 
 /// Show the list under the cursor and wait for a choice. Needs a terminal on
-/// stdin and stderr; the list is drawn on stderr and erased afterwards.
-pub fn choose(mut picker: Picker) -> Result<Outcome> {
+/// stdin and stderr; the list is drawn on stderr and erased afterwards, so
+/// after an `Edit` the caller can run the editor and call this again.
+pub fn choose(picker: &mut Picker) -> Result<Outcome> {
     let mut out = std::io::stderr();
     terminal::enable_raw_mode()?;
     let result = (|| -> Result<Outcome> {
@@ -187,7 +199,8 @@ pub fn choose(mut picker: Picker) -> Result<Outcome> {
                     line.trim_end().to_string()
                 });
             }
-            lines.push(format!("{}", style::Stylize::dim(KEYS)));
+            let keys = if picker.editable { KEYS_EDIT } else { KEYS };
+            lines.push(format!("{}", style::Stylize::dim(keys)));
             for line in &lines {
                 queue!(out, style::Print(line), style::Print("\r\n"))?;
             }
@@ -298,6 +311,17 @@ mod tests {
             Some(Outcome::Open(Some("work".into())))
         );
         assert_eq!(key(&mut p, KeyCode::Char('9')), None, "no ninth entry");
+        assert_eq!(
+            key(&mut p, KeyCode::Char('e')),
+            None,
+            "only the launch list edits"
+        );
+        p.editable = true;
+        p.selected = 1;
+        assert_eq!(
+            key(&mut p, KeyCode::Char('e')),
+            Some(Outcome::Edit(Some("work".into())))
+        );
         assert_eq!(key(&mut p, KeyCode::Esc), Some(Outcome::Cancel));
         assert_eq!(
             p.key(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL)),

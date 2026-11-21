@@ -64,8 +64,9 @@ To choose at startup:
 
 - `sitroom` with no command, in a terminal, lists the saved dashboards and opens the one you
   choose in the TUI. `sitroom tui --pick` and `sitroom serve --pick` do the same for the TUI
-  and the web view. Use the arrow keys and Enter, or the entry's number; Esc quits. The last
-  entry is `config.yaml` alone. With no saved dashboards there is nothing to choose, and it
+  and the web view. Use the arrow keys and Enter, or the entry's number; Esc quits. `e` opens
+  the selected dashboard's file in `$VISUAL` or `$EDITOR` (default `vi`) and comes back to
+  the list when you close it. The last entry is `config.yaml` alone. With no saved dashboards there is nothing to choose, and it
   opens at once. With no terminal, `--pick` prints the list and exits.
 - `sitroom dashboards list --json` lists them for a script.
 

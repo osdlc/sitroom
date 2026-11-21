@@ -12,8 +12,8 @@ released on their own; they record the stages the project was built in.
   or later. `cargo binstall sitroom` downloads the release archive instead of compiling.
 - **Choose a dashboard at startup.** With no `--dashboard`, the saved dashboard named `default`
   is opened when there is one (`--no-dashboard` skips it). `sitroom` with no command, in a
-  terminal, lists the saved dashboards and opens your choice in the TUI; `tui --pick` and
-  `serve --pick` do the same. The TUI lists them on `d` to switch while it runs, and
+  terminal, lists the saved dashboards and opens your choice in the TUI (`e` edits the
+  selected one's file first); `tui --pick` and `serve --pick` do the same. The TUI lists them on `d` to switch while it runs, and
   `sitroom dashboards list --json` prints them for scripts. Before, `sitroom` with no command
   printed the usage and exited 2; without a terminal it still exits 2.
 - **Install script.** `curl -fsSL https://osdlc.github.io/sitroom/install.sh | sh` installs `sitroom` and `sit`
