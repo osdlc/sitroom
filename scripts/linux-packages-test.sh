@@ -44,7 +44,8 @@ test -f /usr/share/doc/sitroom/README.md
 sitroom --version
 sit --version
 remove
-if command -v sitroom >/dev/null 2>&1; then
+# The files, not `command -v`: the shell remembers where it found them.
+if [ -e /usr/bin/sitroom ] || [ -e /usr/bin/sit ]; then
   echo 'sitroom is still installed after removing the package' >&2
   exit 1
 fi
