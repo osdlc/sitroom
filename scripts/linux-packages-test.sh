@@ -38,8 +38,12 @@ else
 fi
 
 echo '--- the package'
-test "$(command -v sitroom)" = /usr/bin/sitroom
-test "$(command -v sit)" = /usr/bin/sit
+# The files, then that they are on PATH. Not `command -v` = /usr/bin/...:
+# on Fedora /usr/sbin is a link to /usr/bin and comes first on PATH.
+test -x /usr/bin/sitroom
+test -x /usr/bin/sit
+command -v sitroom >/dev/null
+command -v sit >/dev/null
 test -f /usr/share/doc/sitroom/README.md
 sitroom --version
 sit --version
