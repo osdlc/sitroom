@@ -251,10 +251,57 @@ jobs:
           path: packages/
           if-no-files-found: error
 
+  # Each package installed on the distros it is for, on both CPUs, and
+  # install.sh choosing the right build there: glibc 2.35 or later gets the
+  # glibc build, Alpine and older glibc (Ubuntu 20.04) the static one.
+  linux-test:
+    needs: [binaries, packages]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+        distro:
+          - { image: "debian:12", libc: gnu }
+          - { image: "ubuntu:20.04", libc: musl }
+          - { image: "fedora:42", libc: gnu }
+          - { image: "alpine:3.22", libc: musl }
+    name: linux-test (${{ matrix.distro.image }}, ${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: packages
+          path: packages
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: binaries-*-linux-*
+          merge-multiple: true
+          path: archives
+
+      # Lay the archives out as a release (v<version>/ with SHA256SUMS) for
+      # install.sh, then run the test in the distro's own container.
+      - name: Install and run
+        env:
+          IMAGE: ${{ matrix.distro.image }}
+          LIBC: ${{ matrix.distro.libc }}
+        run: |
+          set -euo pipefail
+          version="$(cd archives && ls sitroom-*-x86_64-unknown-linux-gnu.tar.gz | sed 's/^sitroom-\(.*\)-x86_64-unknown-linux-gnu\.tar\.gz$/\1/')"
+          mkdir -p "release/v$version"
+          mv archives/*.tar.gz "release/v$version/"
+          (cd "release/v$version" && sha256sum *.tar.gz > SHA256SUMS)
+          docker run --rm -v "$PWD:/w" -w /w "$IMAGE" sh scripts/linux-packages-test.sh "$version" "$LIBC"
+
   # The GitHub Release of the tag: the archives, SHA256SUMS and the
   # changelog's section for the version.
   github:
-    needs: [publish, binaries, packages]
+    needs: [publish, binaries, packages, linux-test]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
