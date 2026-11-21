@@ -44,7 +44,10 @@ test -x /usr/bin/sitroom
 test -x /usr/bin/sit
 command -v sitroom >/dev/null
 command -v sit >/dev/null
-test -f /usr/share/doc/sitroom/README.md
+# Ubuntu's container images tell dpkg to leave out /usr/share/doc.
+if ! grep -qs '^path-exclude=/usr/share/doc' /etc/dpkg/dpkg.cfg.d/*; then
+  test -f /usr/share/doc/sitroom/README.md
+fi
 sitroom --version
 sit --version
 remove
