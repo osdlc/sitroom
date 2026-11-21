@@ -1213,8 +1213,9 @@ mod tests {
         );
     }
 
+    /// 32 rows: the help's key list and the modules under it fit.
     fn render(app: &App) -> String {
-        let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+        let mut terminal = Terminal::new(TestBackend::new(100, 32)).unwrap();
         terminal
             .draw(|f| {
                 draw(f, app, Instant::now());
