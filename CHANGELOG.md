@@ -12,10 +12,15 @@ released on their own; they record the stages the project was built in.
   or later. `cargo binstall sitroom` downloads the release archive instead of compiling.
 - **Choose a dashboard at startup.** With no `--dashboard`, the saved dashboard named `default`
   is opened when there is one (`--no-dashboard` skips it). `sitroom` with no command, in a
-  terminal, lists the saved dashboards and opens your choice in the TUI (`e` edits the
-  selected one's file first); `tui --pick` and `serve --pick` do the same. The TUI lists them on `d` to switch while it runs, and
+  terminal, lists the saved dashboards and opens your choice in the TUI; `tui --pick` and
+  `serve --pick` do the same. In the list, `e` opens the screen editor in the browser
+  (`serve`) or the file in `$EDITOR` (`tui`), and **+ new dashboard** makes one. The TUI lists them on `d` to switch while it runs, and
   `sitroom dashboards list --json` prints them for scripts. Before, `sitroom` with no command
   printed the usage and exited 2; without a terminal it still exits 2.
+- **Starter template.** A new dashboard can start from the starter template (the demo's
+  screens for now), as well as blank or a copy: in the list above and in **+ New** in the web
+  view and the apps. In the module contract, `create_dashboard` takes `from: "blank" | "copy" |
+  "starter"` instead of `copy: bool`.
 - **Install script.** `curl -fsSL https://osdlc.github.io/sitroom/install.sh | sh` installs `sitroom` and `sit`
   from the latest release into `~/.local/bin`, after checking `SHA256SUMS` (`--version`, `--to`).
 - **No more moving the old folders.** 0.9.0 moved `~/.config/dashboard` and the data folder to

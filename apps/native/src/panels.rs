@@ -5,7 +5,7 @@ use gpui::{
     Context, Div, ElementId, FontWeight, KeyDownEvent, MouseButton, Pixels, SharedString, Size,
     Stateful, div, prelude::*, px,
 };
-use sitroom_contract::{ClientMessage, Theme, UiSettings};
+use sitroom_contract::{ClientMessage, NewDashboardFrom, Theme, UiSettings};
 
 use crate::app::{Dashboard, Overlay};
 use crate::input::TextField;
@@ -56,10 +56,10 @@ fn refresh_text(ms: Option<u64>) -> String {
     ms.map_or("push".to_string(), format_ms)
 }
 
-/// The "new dashboard" dialog: a name, and whether to copy the one in use.
+/// The "new dashboard" dialog: a name, and what it starts as.
 pub struct NewDashboard {
     pub name: TextField,
-    pub copy: bool,
+    pub from: NewDashboardFrom,
     pub error: Option<String>,
     /// The outcome counter when the request went out, while waiting for the answer.
     pub waiting: Option<u64>,
@@ -153,11 +153,11 @@ impl Ui<'_> {
 }
 
 impl Dashboard {
-    pub fn open_new_dashboard(&mut self, copy: bool) {
+    pub fn open_new_dashboard(&mut self, from: NewDashboardFrom) {
         self.overlay = Overlay::None;
         self.new_dashboard = Some(NewDashboard {
             name: TextField::default(),
-            copy,
+            from,
             error: None,
             waiting: None,
         });
@@ -175,7 +175,7 @@ impl Dashboard {
         new.error = None;
         let message = ClientMessage::CreateDashboard {
             name: new.name.text.clone(),
-            copy: new.copy,
+            from: new.from,
         };
         self.send(message);
     }
@@ -197,7 +197,7 @@ impl Dashboard {
             new.error = Some(error.lines().next().unwrap_or("").to_string());
             return false;
         }
-        let blank = !new.copy;
+        let blank = new.from == NewDashboardFrom::Blank;
         self.new_dashboard = None;
         blank
     }
@@ -252,11 +252,14 @@ impl Dashboard {
                     .bg(ui.p.get("text")),
             )
             .child(after.to_string());
-        let choice = |id: &'static str, label: &'static str, copy: bool, cx: &mut Context<Self>| {
-            ui.button(id, label, new.copy == copy)
+        let choice = |id: &'static str,
+                      label: &'static str,
+                      from: NewDashboardFrom,
+                      cx: &mut Context<Self>| {
+            ui.button(id, label, new.from == from)
                 .on_click(cx.listener(move |this, _, _, cx| {
                     if let Some(new) = &mut this.new_dashboard {
-                        new.copy = copy;
+                        new.from = from;
                         cx.notify();
                     }
                 }))
@@ -267,8 +270,11 @@ impl Dashboard {
             .dashboard
             .clone()
             .unwrap_or("config.yaml".to_string());
-        let hint = if new.copy {
+        let hint = if new.from == NewDashboardFrom::Copy {
             format!("A copy of {current}, as its own file you can change.")
+        } else if new.from == NewDashboardFrom::Starter {
+            "Ready-made screens to start from: change, remove or add tiles in the editor."
+                .to_string()
         } else {
             "One empty screen. Modules in config.yaml keep running; add what you want to show."
                 .to_string()
@@ -304,8 +310,8 @@ impl Dashboard {
                     .bg(ui.p.get("surface"))
                     .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                     .child(ui.heading(
-                        if new.copy {
-                            "Save sitroom as"
+                        if new.from == NewDashboardFrom::Copy {
+                            "Save dashboard as"
                         } else {
                             "New dashboard"
                         },
@@ -317,8 +323,19 @@ impl Dashboard {
                         div()
                             .flex()
                             .gap(px(6.0))
-                            .child(choice("new-blank", "Blank", false, cx))
-                            .child(choice("new-copy", "Copy of current", true, cx)),
+                            .child(choice(
+                                "new-starter",
+                                "Starter template",
+                                NewDashboardFrom::Starter,
+                                cx,
+                            ))
+                            .child(choice("new-blank", "Blank", NewDashboardFrom::Blank, cx))
+                            .child(choice(
+                                "new-copy",
+                                "Copy of current",
+                                NewDashboardFrom::Copy,
+                                cx,
+                            )),
                     )
                     .child(ui.muted(0.85, hint))
                     .children(

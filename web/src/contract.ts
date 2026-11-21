@@ -457,9 +457,9 @@ export type ClientMessage =
     }
   | {
       /**
-       * Copy sitroom in use. `false`: one empty screen.
+       * What it starts as.
        */
-      copy?: boolean;
+      from?: NewDashboardFrom;
       /**
        * The new dashboard's name, before it is made into a slug.
        */
@@ -470,6 +470,10 @@ export type ClientMessage =
  * Light or dark, for the whole sitroom.
  */
 export type Theme = "auto" | "light" | "dark";
+/**
+ * What a new dashboard starts as.
+ */
+export type NewDashboardFrom = "blank" | "copy" | "starter";
 /**
  * Messages the host sends to the web view over its WebSocket.
  */

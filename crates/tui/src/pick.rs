@@ -19,8 +19,10 @@ use crate::help::centered;
 use crate::mouse::{Click, Hits};
 use crate::theme::Palette;
 
-/// The last entry's label: no saved dashboard, the config file alone.
+/// The entry for no saved dashboard, the config file alone.
 pub const CONFIG_ALONE: &str = "config.yaml alone";
+/// The launch list's last entry.
+pub const NEW: &str = "+ new dashboard";
 
 /// One choice in the list.
 #[derive(Debug, Clone, PartialEq)]
@@ -29,11 +31,17 @@ pub struct Entry {
     pub name: Option<String>,
     /// Its `description:`.
     pub description: Option<String>,
+    /// The "+ new dashboard" entry.
+    pub create: bool,
 }
 
 impl Entry {
     fn label(&self) -> &str {
-        self.name.as_deref().unwrap_or(CONFIG_ALONE)
+        match (&self.name, self.create) {
+            (_, true) => NEW,
+            (Some(name), _) => name,
+            (None, _) => CONFIG_ALONE,
+        }
     }
 }
 
@@ -44,6 +52,8 @@ pub enum Outcome {
     Open(Option<String>),
     /// Edit this dashboard's file (`None`: `config.yaml`), then choose again.
     Edit(Option<String>),
+    /// Make a new dashboard.
+    New,
     /// Closed without choosing.
     Cancel,
 }
@@ -71,11 +81,13 @@ impl Picker {
             .map(|(name, description)| Entry {
                 name: Some(name),
                 description,
+                create: false,
             })
             .collect();
         entries.push(Entry {
             name: None,
             description: None,
+            create: false,
         });
         let current = entries
             .iter()
@@ -87,6 +99,16 @@ impl Picker {
             current,
             editable: false,
         }
+    }
+
+    /// Add the "+ new dashboard" entry at the end.
+    pub fn with_new(mut self) -> Self {
+        self.entries.push(Entry {
+            name: None,
+            description: Some("starter template, blank, or a copy".into()),
+            create: true,
+        });
+        self
     }
 
     /// The list from the settings a renderer has.
@@ -123,7 +145,11 @@ impl Picker {
             }
             KeyCode::Enter => return Some(self.open(self.selected)),
             KeyCode::Char('e') if self.editable => {
-                return Some(Outcome::Edit(self.entries[self.selected].name.clone()));
+                let entry = &self.entries[self.selected];
+                return Some(match entry.create {
+                    true => Outcome::New,
+                    false => Outcome::Edit(entry.name.clone()),
+                });
             }
             KeyCode::Esc | KeyCode::Char('q') => return Some(Outcome::Cancel),
             _ => {}
@@ -133,7 +159,10 @@ impl Picker {
 
     /// Choose entry `i`.
     pub fn open(&self, i: usize) -> Outcome {
-        Outcome::Open(self.entries.get(i).and_then(|e| e.name.clone()))
+        match self.entries.get(i) {
+            Some(e) if e.create => Outcome::New,
+            e => Outcome::Open(e.and_then(|e| e.name.clone())),
+        }
     }
 
     /// One line per entry: "▸ 1 work   Day job   (in use)".
@@ -323,6 +352,11 @@ mod tests {
             Some(Outcome::Edit(Some("work".into())))
         );
         assert_eq!(key(&mut p, KeyCode::Esc), Some(Outcome::Cancel));
+        let mut p = p.with_new();
+        assert_eq!(p.entries[3].label(), NEW);
+        assert_eq!(key(&mut p, KeyCode::Char('4')), Some(Outcome::New));
+        p.selected = 3;
+        assert_eq!(key(&mut p, KeyCode::Char('e')), Some(Outcome::New));
         assert_eq!(
             p.key(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL)),
             Some(Outcome::Cancel)

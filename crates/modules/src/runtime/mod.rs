@@ -15,9 +15,9 @@ use std::time::Duration;
 use anyhow::{Context, Result, bail};
 use sitroom_contract::{
     AddOutcome, CatalogEntry, ClientMessage, ConfigInfo, CreateOutcome, DashboardSummary,
-    EntryKind, ModuleSummary, Size, UiSettings,
+    EntryKind, ModuleSummary, NewDashboardFrom, Size, UiSettings,
 };
-use sitroom_core::config::dashboards::{BLANK, Registry, name_for};
+use sitroom_core::config::dashboards::{BLANK, Registry, create};
 use sitroom_core::config::layers::{self, LayerKind, Layered, Sources};
 use sitroom_core::config::packages::{Packages, market_entries, market_index_path};
 use sitroom_core::config::{Config, DEFAULT_CONFIG, Missing, ModuleConfig, NewModule, Part};
@@ -308,8 +308,8 @@ impl Runtime {
                 }
             }
             ClientMessage::SwitchDashboard { name } => self.switch(name).await,
-            ClientMessage::CreateDashboard { name, copy } => {
-                let result = self.create_dashboard(&name, copy);
+            ClientMessage::CreateDashboard { name, from } => {
+                let result = self.create_dashboard(&name, from);
                 let seq = self.created.as_ref().map_or(0, |c| c.seq) + 1;
                 self.created = Some(CreateOutcome {
                     name,
@@ -327,28 +327,18 @@ impl Runtime {
     /// Save a new dashboard file and return its name. A copy takes the file
     /// settings are saved to, comments included, or the demo when that is
     /// what's on screen. A name already in use is refused.
-    fn create_dashboard(&self, name: &str, copy: bool) -> Result<String> {
-        let name = name.trim();
-        if name.is_empty() {
-            bail!("the dashboard needs a name");
-        }
-        let name = name_for(name);
-        let registry = registry(&self.sources)?;
-        if registry.path(&name)?.exists() {
-            bail!("there is already a dashboard called {name:?}");
-        }
-        let text = if !copy {
-            BLANK.to_string()
-        } else if self.path().exists() {
+    fn create_dashboard(&self, name: &str, from: NewDashboardFrom) -> Result<String> {
+        create(&registry(&self.sources)?, name, from, || {
             let path = self.path();
-            std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?
-        } else if !self.loaded.exists {
-            DEFAULT_CONFIG.to_string()
-        } else {
-            BLANK.to_string()
-        };
-        registry.save(&name, &text, false)?;
-        Ok(name)
+            Ok(if path.exists() {
+                std::fs::read_to_string(path)
+                    .with_context(|| format!("reading {}", path.display()))?
+            } else if !self.loaded.exists {
+                DEFAULT_CONFIG.to_string()
+            } else {
+                BLANK.to_string()
+            })
+        })
     }
 
     /// Write a catalog entry's `modules:` entry, and its tile when the config
@@ -1122,11 +1112,13 @@ mod tests {
         };
         let (mut runtime, rx) = Runtime::start(sources).await.unwrap();
 
-        let create = |name: &str, copy| ClientMessage::CreateDashboard {
+        let create = |name: &str, from| ClientMessage::CreateDashboard {
             name: name.into(),
-            copy,
+            from,
         };
-        runtime.handle(create("My Work", false)).await;
+        runtime
+            .handle(create("My Work", NewDashboardFrom::Blank))
+            .await;
         let settings = rx.borrow().clone();
         assert_eq!(settings.config.dashboard.as_deref(), Some("my-work"));
         assert_eq!(settings.config.created.as_ref().unwrap().error, None);
@@ -1134,20 +1126,24 @@ mod tests {
         assert!(settings.screens[0].tiles.is_empty());
 
         // A name in use is refused, and nothing changes.
-        runtime.handle(create("my-work", true)).await;
+        runtime
+            .handle(create("my-work", NewDashboardFrom::Copy))
+            .await;
         let settings = rx.borrow().clone();
         let created = settings.config.created.clone().unwrap();
         assert_eq!(created.seq, 2);
         assert!(created.error.unwrap().contains("already"));
         assert!(settings.screens[0].tiles.is_empty());
-        runtime.handle(create("   ", false)).await;
+        runtime.handle(create("   ", NewDashboardFrom::Blank)).await;
         assert!(rx.borrow().config.created.clone().unwrap().error.is_some());
 
         // A copy keeps the file as it was, comments too.
         runtime
             .handle(ClientMessage::SwitchDashboard { name: None })
             .await;
-        runtime.handle(create("second", true)).await;
+        runtime
+            .handle(create("second", NewDashboardFrom::Copy))
+            .await;
         let settings = rx.borrow().clone();
         assert_eq!(settings.config.dashboard.as_deref(), Some("second"));
         assert_eq!(settings.screens[0].name, "a");

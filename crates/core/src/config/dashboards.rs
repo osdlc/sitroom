@@ -9,10 +9,42 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 
+use sitroom_contract::NewDashboardFrom;
+
 use crate::config::TOOL;
 
 /// The saved dashboard used when none is chosen (see `layers::Sources`).
 pub const DEFAULT: &str = "default";
+
+/// The starter template a new dashboard can start from: the built-in demo
+/// for now.
+pub const STARTER: &str = crate::config::DEFAULT_CONFIG;
+
+/// Save a new dashboard called `name` (made into a slug) and return the slug.
+/// `copy` gives the text a copy starts from; it is called only for
+/// `NewDashboardFrom::Copy`. A name already in use is refused.
+pub fn create(
+    registry: &Registry,
+    name: &str,
+    from: NewDashboardFrom,
+    copy: impl FnOnce() -> Result<String>,
+) -> Result<String> {
+    let name = name.trim();
+    if name.is_empty() {
+        bail!("the dashboard needs a name");
+    }
+    let name = name_for(name);
+    if registry.path(&name)?.exists() {
+        bail!("there is already a dashboard called {name:?}");
+    }
+    let text = match from {
+        NewDashboardFrom::Blank => BLANK.to_string(),
+        NewDashboardFrom::Starter => STARTER.to_string(),
+        NewDashboardFrom::Copy => copy()?,
+    };
+    registry.save(&name, &text, false)?;
+    Ok(name)
+}
 
 /// A new, empty dashboard. It needs a screen: with no `screens:` at all, the
 /// screens below it would stay.
@@ -207,6 +239,36 @@ mod tests {
         let config = crate::config::parse(BLANK).unwrap();
         assert_eq!(config.screens.len(), 1);
         assert!(config.screens[0].tiles.is_empty());
+    }
+
+    #[test]
+    fn create_starts_blank_from_the_starter_or_as_a_copy() {
+        let dir = temp("create");
+        let registry = Registry::new(&dir);
+        let no_copy = || -> Result<String> { panic!("only a copy reads the file in use") };
+        assert_eq!(
+            create(&registry, "My Start", NewDashboardFrom::Starter, no_copy).unwrap(),
+            "my-start"
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.join("my-start.yaml")).unwrap(),
+            STARTER
+        );
+        create(&registry, "empty", NewDashboardFrom::Blank, no_copy).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dir.join("empty.yaml")).unwrap(),
+            BLANK
+        );
+        let copy = || Ok("theme: dark\n".to_string());
+        create(&registry, "copy", NewDashboardFrom::Copy, copy).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dir.join("copy.yaml")).unwrap(),
+            "theme: dark\n"
+        );
+        // A name in use, or none, is refused.
+        assert!(create(&registry, "empty", NewDashboardFrom::Blank, no_copy).is_err());
+        assert!(create(&registry, "  ", NewDashboardFrom::Blank, no_copy).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

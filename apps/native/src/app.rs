@@ -10,7 +10,9 @@ use gpui::{
     Context, FocusHandle, KeyDownEvent, MouseMoveEvent, ScrollHandle, SharedString, Task, Window,
     WindowAppearance, div, point, prelude::*, px,
 };
-use sitroom_contract::{CatalogEntry, ClientMessage, Theme, TileUpdate, UiSettings};
+use sitroom_contract::{
+    CatalogEntry, ClientMessage, NewDashboardFrom, Theme, TileUpdate, UiSettings,
+};
 use sitroom_modules::runtime::Host;
 use tokio::sync::{broadcast, mpsc, watch};
 
@@ -643,14 +645,14 @@ impl Dashboard {
                     .child(
                         ui.button("new-dashboard", "+ New", false)
                             .on_click(cx.listener(|this, _, _, cx| {
-                                this.open_new_dashboard(false);
+                                this.open_new_dashboard(NewDashboardFrom::Starter);
                                 cx.notify();
                             })),
                     )
                     .child(
                         ui.button("save-as", "Save as…", false)
                             .on_click(cx.listener(|this, _, _, cx| {
-                                this.open_new_dashboard(true);
+                                this.open_new_dashboard(NewDashboardFrom::Copy);
                                 cx.notify();
                             })),
                     ),

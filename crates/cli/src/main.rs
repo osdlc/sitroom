@@ -19,6 +19,7 @@ use sitroom_modules::runtime::{load_valid, missing_packages, start};
 mod background;
 mod dashboards;
 mod marketplace;
+mod pick;
 mod plugin_check;
 mod plugin_new;
 mod widgets;
@@ -364,12 +365,15 @@ async fn run(mut cli: Cli) -> Result<()> {
                 .into());
         }
     };
-    let pick = matches!(
-        command,
-        Command::Tui { pick: true } | Command::Serve { pick: true, .. }
-    );
-    if pick && !json && !pick_dashboard(&mut cli)? {
-        return Ok(());
+    // `--pick`: choose first, then start with that dashboard. `edit`: open
+    // the web view with its screen editor open.
+    let mut edit = false;
+    let web = matches!(command, Command::Serve { pick: true, .. });
+    if (web || matches!(command, Command::Tui { pick: true })) && !json {
+        match pick::run(&mut cli, web)? {
+            Some(picked) => edit = picked.edit,
+            None => return Ok(()),
+        }
     }
     let sources = Sources {
         machine: cli.config.clone(),
@@ -435,7 +439,7 @@ async fn run(mut cli: Cli) -> Result<()> {
                 } else {
                     "already running"
                 };
-                let link = background::sign_in_link(&record)?;
+                let link = with_edit(background::sign_in_link(&record)?, edit);
                 println!("sitroom: {link} (pid {}, {verb})", record.pid);
                 println!("           signs one browser tab in; unused, it expires in a minute.");
                 if !no_open {
@@ -462,7 +466,7 @@ async fn run(mut cli: Cli) -> Result<()> {
                     tracing::error!("{err:#}");
                 }
                 if !no_open {
-                    background::open_browser(&ready.sign_in);
+                    background::open_browser(&with_edit(ready.sign_in.clone(), edit));
                 }
             };
             let served = sitroom_web::serve(
@@ -776,53 +780,12 @@ fn cli_args(cli: &Cli) -> Vec<std::ffi::OsString> {
     args
 }
 
-/// `--pick`: list the saved dashboards and set `--dashboard` (or
-/// `--no-dashboard`) from the choice; `e` edits one's file first. False: closed without choosing. With
-/// no terminal it prints the list and returns false; with no saved
-/// dashboards there is nothing to choose, so it returns true.
-fn pick_dashboard(cli: &mut Cli) -> Result<bool> {
-    let sources = Sources {
-        dashboard: cli.dashboard.clone(),
-        no_default: cli.no_dashboard,
-        ..Default::default()
-    };
-    let (saved, errors) = sources.registry()?.list();
-    for err in &errors {
-        warn(err);
-    }
-    if saved.is_empty() {
-        return Ok(true);
-    }
-    if !(io::stdin().is_terminal() && io::stderr().is_terminal()) {
-        dashboards::list(&sources, false)?;
-        return Ok(false);
-    }
-    let registry = sources.registry()?;
-    let mut picker = sitroom_tui::Picker::new(
-        saved.into_iter().map(|s| (s.name, s.description)),
-        sources.dashboard_in_use().as_deref(),
-    );
-    picker.editable = true;
-    loop {
-        match sitroom_tui::pick_dashboard(&mut picker)? {
-            sitroom_tui::PickOutcome::Open(name) => {
-                cli.no_dashboard = name.is_none();
-                cli.dashboard = name;
-                return Ok(true);
-            }
-            // The file, in $VISUAL or $EDITOR, then the list again.
-            sitroom_tui::PickOutcome::Edit(name) => {
-                let path = match &name {
-                    Some(name) => registry.path(name)?,
-                    None => match &cli.config {
-                        Some(path) => path.clone(),
-                        None => sitroom_core::config::default_path()?,
-                    },
-                };
-                sitroom_tui::open_editor(&path.to_string_lossy())?;
-            }
-            sitroom_tui::PickOutcome::Cancel => return Ok(false),
-        }
+/// The sign-in link, opening the screen editor when `edit` (`?edit`).
+fn with_edit(link: String, edit: bool) -> String {
+    match (edit, link.contains('?')) {
+        (false, _) => link,
+        (true, true) => format!("{link}&edit"),
+        (true, false) => format!("{link}?edit"),
     }
 }
 

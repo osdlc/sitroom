@@ -46,8 +46,9 @@ built-in modules' settings): opening a dashboard runs them, so read them first. 
 and only `https://` URLs are accepted.
 
 To make one from the app, use **+ New** or **Save as…** next to the title (the web view, the
-desktop app and the GPUI app). **Blank** starts with one empty screen and opens the screen
-editor; **Copy of current** copies the file settings are saved to, comments included, and then
+desktop app and the GPUI app), or **+ new dashboard** in the list `sitroom` shows at
+startup. The **starter template** has ready-made screens to change (the demo's, for now).
+**Blank** starts with one empty screen and opens the screen editor; **Copy of current** copies the file settings are saved to, comments included, and then
 changes go to the copy. Either way the dashboard opens at once. A blank dashboard still has the
 modules from `config.yaml` running, as `modules:` merge (see [Precedence](#precedence)); only
 the screens start empty. A copy keeps relative paths as written, and they then start in
@@ -64,10 +65,16 @@ To choose at startup:
 
 - `sitroom` with no command, in a terminal, lists the saved dashboards and opens the one you
   choose in the TUI. `sitroom tui --pick` and `sitroom serve --pick` do the same for the TUI
-  and the web view. Use the arrow keys and Enter, or the entry's number; Esc quits. `e` opens
-  the selected dashboard's file in `$VISUAL` or `$EDITOR` (default `vi`) and comes back to
-  the list when you close it. The last entry is `config.yaml` alone. With no saved dashboards there is nothing to choose, and it
-  opens at once. With no terminal, `--pick` prints the list and exits.
+  and the web view. Use the arrow keys and Enter, or the entry's number; Esc quits. The list
+  ends with `config.yaml` alone and **+ new dashboard**, which asks for a name and what to
+  start from: the starter template, blank, or a copy of the one in use.
+  - `e` in `serve --pick` opens the chosen dashboard with the screen editor open in the
+    browser (a new blank one opens there too).
+  - `e` in the TUI's list opens the file in `$VISUAL` or `$EDITOR` (default `vi`) and comes
+    back to the list when you close it.
+
+  With no saved dashboards there is nothing to choose, and it opens at once. With no
+  terminal, `--pick` prints the list and exits.
 - `sitroom dashboards list --json` lists them for a script.
 
 While running:
