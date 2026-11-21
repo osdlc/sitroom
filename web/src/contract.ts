@@ -459,7 +459,7 @@ export type ClientMessage =
       /**
        * What it starts as.
        */
-      from?: NewDashboardFrom;
+      from?: NewDashboardFrom & string;
       /**
        * The new dashboard's name, before it is made into a slug.
        */

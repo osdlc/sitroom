@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use sitroom_contract::{
     AddOutcome, CatalogEntry, ClientMessage, ConfigInfo, CreateOutcome, DashboardSummary,
     EntryKind, ModuleSummary, NewDashboardFrom, Size, UiSettings,
