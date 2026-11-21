@@ -2,13 +2,17 @@
 //! `<config home>/sitroom/dashboards/<name>.yaml`, e.g.
 //! `~/.config/sitroom/dashboards/work.yaml`. A dashboard file has the same
 //! keys as `config.yaml`. `sitroom --dashboard work` lays it over
-//! `config.yaml` (see `layers`).
+//! `config.yaml` (see `layers`); with no `--dashboard`, the one named
+//! `default` is used when it is saved.
 
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 
 use crate::config::TOOL;
+
+/// The saved dashboard used when none is chosen (see `layers::Sources`).
+pub const DEFAULT: &str = "default";
 
 /// A new, empty dashboard. It needs a screen: with no `screens:` at all, the
 /// screens below it would stay.

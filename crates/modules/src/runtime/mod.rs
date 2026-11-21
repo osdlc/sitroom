@@ -201,7 +201,9 @@ impl Runtime {
     /// Show another saved dashboard (`None`: none). If it can't be loaded,
     /// the current one stays and the error is shown.
     async fn switch(&mut self, name: Option<String>) {
+        // `None` is `config.yaml` alone, not the `default` dashboard.
         let sources = Sources {
+            no_default: name.is_none(),
             dashboard: name,
             ..self.sources.clone()
         };
@@ -709,10 +711,7 @@ pub fn load_valid(sources: &Sources) -> Result<Layered> {
 
 /// The saved-dashboards folder for these sources.
 pub fn registry(sources: &Sources) -> Result<Registry> {
-    match &sources.registry {
-        Some(dir) => Ok(Registry::new(dir)),
-        None => Registry::open_default(),
-    }
+    sources.registry()
 }
 
 /// Modification time and length, or `None` when the file doesn't exist.
@@ -918,6 +917,7 @@ mod tests {
             project_from: Some(dir.join("repo")),
             registry: Some(dir.join("dashboards")),
             trust: Some(trust.clone()),
+            no_default: false,
         };
         let error =
             |dashboard: Option<&str>| format!("{:#}", load_valid(&sources(dashboard)).unwrap_err());
@@ -990,6 +990,7 @@ mod tests {
             project_from: None,
             registry: Some(dir.join("dashboards")),
             trust: Some(dir.join("trusted-projects")),
+            no_default: false,
         };
         let started = std::time::Instant::now();
         let (runtime, _rx) = Runtime::start(sources).await.unwrap();
@@ -1024,6 +1025,7 @@ mod tests {
             project_from: None,
             registry: Some(dir.join("dashboards")),
             trust: Some(dir.join("trusted-projects")),
+            no_default: false,
         })
         .await
         .unwrap();
@@ -1077,6 +1079,7 @@ mod tests {
             project_from: Some(dir.join("repo")),
             registry: Some(dir.join("dashboards")),
             trust: Some(trust),
+            no_default: false,
         })
         .await
         .unwrap();
@@ -1188,6 +1191,7 @@ mod tests {
             project_from: Some(dir.join("repo")),
             registry: Some(dir.join("dashboards")),
             trust: Some(trust),
+            no_default: false,
         };
         let (mut runtime, rx) = Runtime::start(sources).await.unwrap();
         let ids = |r: &Runtime| {
@@ -1378,6 +1382,7 @@ mod tests {
             project_from: Some(dir.join("repo/src/deep")),
             registry: Some(dir.join("dashboards")),
             trust: Some(trust),
+            no_default: false,
         })
         .await
         .unwrap();

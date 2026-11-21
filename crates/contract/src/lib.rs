@@ -847,7 +847,7 @@ pub struct AddOutcome {
 /// A saved dashboard, for the switcher.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct DashboardSummary {
-    /// Sitroom's name.
+    /// The dashboard's name.
     pub name: String,
     /// A line about what it shows.
     #[serde(default)]

@@ -306,7 +306,9 @@ Changes to the file apply while sitroom runs. Only modules whose settings change
 ### Dashboards and project files
 
 Keep named dashboards in `~/.config/sitroom/dashboards/<name>.yaml` and open one with
-`sitroom --dashboard work serve`, or switch in the web view. A `.sitroom.yaml` in a
+`sitroom --dashboard work serve`, choose one from a list with `sitroom` (or `serve --pick`),
+or switch while running (`d` in the TUI, the switcher in the web view). The one named
+`default` opens when you don't choose. A `.sitroom.yaml` in a
 repository adds that repository's modules and screens when you run sitroom inside it.
 A project file can run programs, so it is only used after you read it and run
 `sitroom trust`, and again after every change to it.

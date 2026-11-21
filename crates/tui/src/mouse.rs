@@ -9,6 +9,10 @@ pub enum Click {
     Screen(usize),
     Help,
     Settings,
+    /// The footer's "d dashboards": open or close the dashboard list.
+    Dashboards,
+    /// A row of the dashboard list, by index.
+    Dashboard(usize),
     Quit,
     Rotate,
     Theme(Theme),

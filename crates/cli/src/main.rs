@@ -1,6 +1,6 @@
 //! The `sitroom` command: runs dashboards in the terminal or browser and manages their config.
 
-use std::io;
+use std::io::{self, IsTerminal};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -37,9 +37,14 @@ struct Cli {
     #[arg(long, global = true)]
     config: Option<PathBuf>,
     /// Lay this saved dashboard over the config, e.g. `--dashboard work`.
-    /// See `sitroom dashboards list`.
+    /// Without it, the one named `default` is used when it is saved. See
+    /// `sitroom dashboards list`.
     #[arg(long, global = true, value_name = "NAME")]
     dashboard: Option<String>,
+    /// Use the config file alone, even when a dashboard named `default` is
+    /// saved.
+    #[arg(long, global = true, conflicts_with = "dashboard")]
+    no_dashboard: bool,
     /// Don't read a `.sitroom.yaml` from this folder or the ones above it.
     #[arg(long, global = true)]
     no_project: bool,
@@ -48,8 +53,9 @@ struct Cli {
     /// stopped refuse it.
     #[arg(long, global = true)]
     json: bool,
+    /// With no command, in a terminal: `tui --pick`.
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 /// The exit codes, for the end of `--help`: every code in
@@ -74,7 +80,11 @@ fn exit_codes() -> String {
 #[derive(Subcommand)]
 enum Command {
     /// Show sitroom in the terminal.
-    Tui,
+    Tui {
+        /// Choose a saved dashboard from a list first.
+        #[arg(long)]
+        pick: bool,
+    },
     /// Serve the web view on 127.0.0.1 and open it in the browser.
     Serve {
         #[arg(long, default_value_t = 7878)]
@@ -88,6 +98,9 @@ enum Command {
         /// Don't open a browser.
         #[arg(long)]
         no_open: bool,
+        /// Choose a saved dashboard from a list first.
+        #[arg(long)]
+        pick: bool,
         /// Write the background record once listening (set by --detach).
         #[arg(long, hide = true)]
         record: bool,
@@ -186,7 +199,7 @@ enum Command {
 
 #[derive(Subcommand)]
 enum DashboardsCommand {
-    /// List saved dashboards (`*` marks the one chosen with --dashboard).
+    /// List saved dashboards (`*` marks the one in use).
     List,
 }
 
@@ -335,11 +348,33 @@ fn print_json<T: serde::Serialize>(kind: &str, body: &T) -> Result<()> {
     Ok(())
 }
 
-async fn run(cli: Cli) -> Result<()> {
+async fn run(mut cli: Cli) -> Result<()> {
     let json = cli.json;
+    let command = match cli.command.take() {
+        Some(command) => command,
+        // Bare `sitroom`: the TUI, after the list, in a terminal.
+        None if !json && io::stdin().is_terminal() && io::stdout().is_terminal() => {
+            Command::Tui { pick: true }
+        }
+        None => {
+            return Err(Failure::usage("no command given")
+                .hint(format!(
+                    "Run `{NAME} --help` for the commands, or `{NAME} tui`."
+                ))
+                .into());
+        }
+    };
+    let pick = matches!(
+        command,
+        Command::Tui { pick: true } | Command::Serve { pick: true, .. }
+    );
+    if pick && !json && !pick_dashboard(&mut cli)? {
+        return Ok(());
+    }
     let sources = Sources {
         machine: cli.config.clone(),
         dashboard: cli.dashboard.clone(),
+        no_default: cli.no_dashboard,
         project_from: if cli.no_project {
             None
         } else {
@@ -349,18 +384,17 @@ async fn run(cli: Cli) -> Result<()> {
         trust: None,
     };
     let global_args = cli_args(&cli);
-    match cli.command {
-        Command::Tui if json => Err(no_json("tui", "takes over the terminal")),
+    match command {
+        Command::Tui { .. } if json => Err(no_json("tui", "takes over the terminal")),
         Command::Serve { .. } if json => Err(no_json("serve", "runs until stopped")),
         Command::Schema { .. } if json => {
             Err(no_json("schema", "prints a JSON Schema, not a document"))
         }
         Command::Plugin { .. } if json => Err(no_json("plugin", "has no JSON form yet")),
-        Command::Dashboards { .. } if json => Err(no_json("dashboards", "has no JSON form yet")),
         Command::Import { .. } if json => Err(no_json("import", "has no JSON form yet")),
         Command::Export { .. } if json => Err(no_json("export", "has no JSON form yet")),
         Command::Trust { .. } if json => Err(no_json("trust", "has no JSON form yet")),
-        Command::Tui => {
+        Command::Tui { .. } => {
             // Logs would corrupt the TUI; keep them off until there's a log file.
             // Plugins run in process groups of their own, so a closed terminal
             // (SIGHUP) or `kill` reaches only us: stop cleanly so dropping the
@@ -386,6 +420,7 @@ async fn run(cli: Cli) -> Result<()> {
             detach,
             no_open,
             record,
+            pick: _,
         } => {
             if detach {
                 let (record, started) = match background::running()? {
@@ -552,7 +587,7 @@ async fn run(cli: Cli) -> Result<()> {
             Ok(())
         }
         Command::Dashboards { command } => match command {
-            DashboardsCommand::List => dashboards::list(&sources),
+            DashboardsCommand::List => dashboards::list(&sources, json),
         },
         Command::Import { from, name, force } => {
             dashboards::import(&sources, &from, name.as_deref(), force)
@@ -732,10 +767,48 @@ fn cli_args(cli: &Cli) -> Vec<std::ffi::OsString> {
         args.push("--dashboard".into());
         args.push(name.into());
     }
+    if cli.no_dashboard {
+        args.push("--no-dashboard".into());
+    }
     if cli.no_project {
         args.push("--no-project".into());
     }
     args
+}
+
+/// `--pick`: list the saved dashboards and set `--dashboard` (or
+/// `--no-dashboard`) from the choice. False: closed without choosing. With
+/// no terminal it prints the list and returns false; with no saved
+/// dashboards there is nothing to choose, so it returns true.
+fn pick_dashboard(cli: &mut Cli) -> Result<bool> {
+    let sources = Sources {
+        dashboard: cli.dashboard.clone(),
+        no_default: cli.no_dashboard,
+        ..Default::default()
+    };
+    let (saved, errors) = sources.registry()?.list();
+    for err in &errors {
+        warn(err);
+    }
+    if saved.is_empty() {
+        return Ok(true);
+    }
+    if !(io::stdin().is_terminal() && io::stderr().is_terminal()) {
+        dashboards::list(&sources, false)?;
+        return Ok(false);
+    }
+    let picker = sitroom_tui::Picker::new(
+        saved.into_iter().map(|s| (s.name, s.description)),
+        sources.dashboard_in_use().as_deref(),
+    );
+    match sitroom_tui::pick_dashboard(picker)? {
+        sitroom_tui::PickOutcome::Open(name) => {
+            cli.no_dashboard = name.is_none();
+            cli.dashboard = name;
+            Ok(true)
+        }
+        sitroom_tui::PickOutcome::Cancel => Ok(false),
+    }
 }
 
 /// The `--json` body of `status` and `stop`: whether a server was found, and which.

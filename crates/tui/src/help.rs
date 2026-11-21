@@ -22,8 +22,12 @@ pub const KEYS: &[(&str, &str)] = &[
         "s",
         "show or hide settings (t theme, c colors, e edit config)",
     ),
+    ("d", "switch to another saved dashboard"),
     ("r", "start or stop screen rotation (when configured)"),
-    ("Esc", "close help or settings, or step back out"),
+    (
+        "Esc",
+        "close help, settings or dashboards, or step back out",
+    ),
     ("mouse", "click tabs, links and buttons; wheel scrolls"),
     (
         "double-click",

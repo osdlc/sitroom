@@ -1111,7 +1111,7 @@ export interface DashboardSummary {
    */
   description?: string | null;
   /**
-   * Sitroom's name.
+   * The dashboard's name.
    */
   name: string;
 }

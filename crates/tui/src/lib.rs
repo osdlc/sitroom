@@ -33,6 +33,7 @@ mod images;
 mod layout;
 mod mouse;
 mod nav;
+mod pick;
 mod pie;
 mod rotate;
 mod settings;
@@ -46,6 +47,7 @@ mod widgets;
 use canvas::Canvas;
 use mouse::{Click, Hits};
 use nav::{Dir, Focus};
+pub use pick::{Outcome as PickOutcome, Picker, choose as pick_dashboard};
 use theme::{Depth, Palette};
 
 struct App {
@@ -56,6 +58,8 @@ struct App {
     tiles: BTreeMap<String, TileUpdate>,
     screen: usize,
     overlay: Overlay,
+    /// The dashboard list, while `Overlay::Dashboards` is open.
+    picker: Option<Picker>,
     quit: bool,
     rotation: Option<rotate::Rotation>,
     /// Where actions such as changing the theme go. `None` in tests.
@@ -113,6 +117,8 @@ enum Overlay {
     None,
     Help,
     Settings,
+    /// The `d` list of saved dashboards; its state is `App::picker`.
+    Dashboards,
 }
 
 /// Show sitroom in the terminal until the user quits.
@@ -148,6 +154,7 @@ pub async fn run(
         tiles,
         screen: 0,
         overlay: Overlay::None,
+        picker: None,
         quit: false,
         rotation,
         actions: Some(actions),
@@ -372,6 +379,12 @@ impl App {
             Click::Tile(_) => {}
             Click::Help => self.overlay = toggle(self.overlay, Overlay::Help),
             Click::Settings => self.overlay = toggle(self.overlay, Overlay::Settings),
+            Click::Dashboards => self.toggle_dashboards(),
+            Click::Dashboard(i) => {
+                if let Some(outcome) = self.picker.as_ref().map(|p| p.open(i)) {
+                    self.picked(outcome);
+                }
+            }
             Click::Quit => self.quit = true,
             Click::Theme(theme) => {
                 if let Some(tx) = &self.actions {
@@ -514,6 +527,29 @@ impl App {
         self.scroll = scroll.min(self.max_scroll.get());
     }
 
+    /// Open the dashboard list on the one in use, or close it.
+    fn toggle_dashboards(&mut self) {
+        if self.overlay == Overlay::Dashboards {
+            self.overlay = Overlay::None;
+            self.picker = None;
+        } else {
+            self.picker = Some(Picker::from_config(&self.settings.config));
+            self.overlay = Overlay::Dashboards;
+        }
+    }
+
+    /// A choice from the dashboard list: switch to it, and close the list.
+    fn picked(&mut self, outcome: PickOutcome) {
+        if let PickOutcome::Open(name) = outcome
+            && name != self.settings.config.dashboard
+            && let Some(tx) = &self.actions
+        {
+            let _ = tx.send(ClientMessage::SwitchDashboard { name });
+        }
+        self.overlay = Overlay::None;
+        self.picker = None;
+    }
+
     fn set_color_theme(&self, name: String) {
         if let Some(tx) = &self.actions {
             let _ = tx.send(ClientMessage::SetColorTheme {
@@ -532,6 +568,14 @@ impl App {
                 return;
             }
             r.input(now);
+        }
+        if self.overlay == Overlay::Dashboards {
+            if key.code == KeyCode::Char('d') {
+                self.toggle_dashboards();
+            } else if let Some(outcome) = self.picker.as_mut().and_then(|p| p.key(key)) {
+                self.picked(outcome);
+            }
+            return;
         }
         if self.overlay == Overlay::Settings {
             match key.code {
@@ -569,6 +613,7 @@ impl App {
             KeyCode::Char('q') => self.quit = true,
             KeyCode::Char('?') => self.overlay = toggle(self.overlay, Overlay::Help),
             KeyCode::Char('s') => self.overlay = toggle(self.overlay, Overlay::Settings),
+            KeyCode::Char('d') => self.toggle_dashboards(),
             KeyCode::Esc if self.overlay != Overlay::None => self.overlay = Overlay::None,
             // Out of an item first, then out of fullscreen, then focus off.
             KeyCode::Esc if matches!(self.focus, Focus::Item { .. }) => {
@@ -639,6 +684,8 @@ fn draw(f: &mut Frame, app: &App, now: Instant) -> Hits {
         (" ? help".to_string(), Some(Click::Help)),
         ("  ".to_string(), None),
         ("s settings".to_string(), Some(Click::Settings)),
+        ("  ".to_string(), None),
+        ("d dashboards".to_string(), Some(Click::Dashboards)),
         ("  Tab screens  arrows move  Enter open  ".to_string(), None),
         ("q quit".to_string(), Some(Click::Quit)),
     ];
@@ -684,6 +731,11 @@ fn draw(f: &mut Frame, app: &App, now: Instant) -> Hits {
     match app.overlay {
         Overlay::Help => help::draw(f, p, &app.settings, app.screen, &mut hits),
         Overlay::Settings => settings::draw(f, p, &app.settings, &mut hits),
+        Overlay::Dashboards => {
+            if let Some(picker) = &app.picker {
+                pick::draw(f, p, picker, &mut hits)
+            }
+        }
         Overlay::None => {}
     }
     draw_hover(f, app, &hits);
@@ -924,6 +976,7 @@ mod tests {
             tiles,
             screen: 0,
             overlay: Overlay::None,
+            picker: None,
             quit: false,
             rotation: None,
             actions: None,
@@ -1048,6 +1101,66 @@ mod tests {
                 theme: Theme::Light,
                 ..
             })
+        ));
+    }
+
+    #[test]
+    fn d_lists_dashboards_and_switches() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let mut app = app();
+        app.actions = Some(tx);
+        app.settings.config.dashboard = Some("default".into());
+        app.settings.config.dashboards = ["default", "work"]
+            .map(|name| sitroom_contract::DashboardSummary {
+                name: name.into(),
+                description: None,
+            })
+            .into();
+        let key = |app: &mut App, code| app.on_key(KeyEvent::from(code), Instant::now());
+
+        key(&mut app, KeyCode::Char('d'));
+        assert_eq!(app.overlay, Overlay::Dashboards);
+        assert_eq!(
+            app.picker.as_ref().unwrap().selected,
+            0,
+            "on the one in use"
+        );
+        // Screen keys go to the list while it is open.
+        key(&mut app, KeyCode::Down);
+        assert_eq!(app.screen, 0);
+        key(&mut app, KeyCode::Enter);
+        assert_eq!(app.overlay, Overlay::None);
+        assert!(matches!(
+            rx.try_recv(),
+            Ok(ClientMessage::SwitchDashboard { name: Some(n) }) if n == "work"
+        ));
+
+        // The one in use sends nothing; `d` again closes.
+        key(&mut app, KeyCode::Char('d'));
+        key(&mut app, KeyCode::Char('1'));
+        assert!(rx.try_recv().is_err());
+        key(&mut app, KeyCode::Char('d'));
+        key(&mut app, KeyCode::Char('d'));
+        assert_eq!(app.overlay, Overlay::None);
+
+        // A click on the last row: config.yaml alone.
+        key(&mut app, KeyCode::Char('d'));
+        let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+        let mut hits = Hits::default();
+        terminal
+            .draw(|f| hits = draw(f, &app, Instant::now()))
+            .unwrap();
+        let buf = terminal.backend().buffer().clone();
+        let (x, y) = (0..30)
+            .flat_map(|y| (0..90).map(move |x| (x, y)))
+            .find(|&(x, y)| {
+                (0..6).map(|i| buf[(x + i, y)].symbol()).collect::<String>() == "config"
+            })
+            .expect("the config.yaml row is drawn");
+        app.on_click(hits.at(x, y).cloned().unwrap(), Instant::now());
+        assert!(matches!(
+            rx.try_recv(),
+            Ok(ClientMessage::SwitchDashboard { name: None })
         ));
     }
 
@@ -1520,6 +1633,7 @@ mod tests_support {
             tiles: BTreeMap::new(),
             screen: 0,
             overlay: Overlay::None,
+            picker: None,
             quit: false,
             rotation: None,
             actions: None,
@@ -1738,6 +1852,7 @@ mod tests_support {
             tiles,
             screen: 0,
             overlay: Overlay::None,
+            picker: None,
             quit: false,
             rotation: None,
             actions: None,
