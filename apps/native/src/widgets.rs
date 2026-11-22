@@ -11,8 +11,8 @@ use std::f32::consts::TAU;
 
 use gpui::{
     AnyElement, Background, ContentMask, Div, FontWeight, Hsla, PathBuilder, ScrollHandle,
-    SharedString, StyledText, TextRun, Window, canvas, div, fill, font, linear_color_stop,
-    linear_gradient, point, prelude::*, px, size,
+    SharedString, StrikethroughStyle, StyledText, TextRun, UnderlineStyle, Window, canvas, div,
+    fill, font, linear_color_stop, linear_gradient, point, prelude::*, px, size,
 };
 use sitroom_contract::{
     Action, Bar, Cell, ColorScale, Column, ListItem, LogLine, Meter, Row, SeriesData, SeriesStyle,
@@ -351,43 +351,90 @@ impl Draw<'_> {
     // ---- text and numbers ----
 
     fn paragraph(&self, text: &str, markdown: bool, width: f32) -> Out {
-        let lines: usize = text
+        let body = self.text(1.0, self.p.get("text"));
+        let (el, shown) = if markdown {
+            let (styled, shown) = self.markdown(text, width);
+            (body.child(styled), shown)
+        } else {
+            (body.child(text.to_string()), text.to_string())
+        };
+        let lines: usize = shown
             .split('\n')
             .map(|l| ((self.m.text_width(l, 1.0) / width.max(1.0)).ceil() as usize).max(1))
             .sum();
-        let body = self.text(1.0, self.p.get("text"));
-        let el = if markdown {
-            body.child(self.markdown(text))
-        } else {
-            body.child(text.to_string())
-        };
         let mut out = Out::new(el, lines as f32 * self.m.line(1.0));
         out.one_line = lines == 1;
         out
     }
 
-    /// `**bold**` and `` `code` ``, as in `inlineMarkdown` in `web/src/format.ts`.
-    fn markdown(&self, text: &str) -> StyledText {
-        let color = self.p.get("text");
+    /// Markdown as styled text, read as the TUI reads it
+    /// (`sitroom_core::markdown`), and the text shown.
+    fn markdown(&self, text: &str, width: f32) -> (StyledText, String) {
+        use sitroom_core::markdown::{self, LineKind};
         let mut plain = String::new();
-        let mut runs = vec![];
-        for (part, kind) in inline_markdown(text) {
-            plain.push_str(part);
-            let (face, background) = match kind {
-                Inline::Plain => (font(UI_FONT), None),
-                Inline::Strong => (font(UI_FONT).bold(), None),
-                Inline::Code => (font(MONO_FONT), Some(self.p.get("track"))),
-            };
-            runs.push(TextRun {
-                len: part.len(),
-                font: face,
-                color,
-                background_color: background,
-                underline: None,
-                strikethrough: None,
-            });
+        let mut runs: Vec<TextRun> = vec![];
+        let run = |len: usize, color: Hsla| TextRun {
+            len,
+            font: font(UI_FONT),
+            color,
+            background_color: None,
+            underline: None,
+            strikethrough: None,
+        };
+        for (i, line) in markdown::lines(text).into_iter().enumerate() {
+            if i > 0 {
+                plain.push('\n');
+                runs.push(run(1, self.p.get("text")));
+            }
+            if line.kind == LineKind::Rule {
+                let dash = self.m.text_width("─", 1.0).max(1.0);
+                let rule = "─".repeat(((width / dash).floor() as usize).max(1));
+                runs.push(run(rule.len(), self.p.get("border")));
+                plain.push_str(&rule);
+                continue;
+            }
+            let heading = matches!(line.kind, LineKind::Heading(_));
+            for span in line.spans {
+                let m = span.mark;
+                let color = if heading || m.code {
+                    self.p.get("accent")
+                } else if m.highlight {
+                    self.p.get("warn")
+                } else if m.muted {
+                    self.p.get("muted")
+                } else {
+                    self.p.get("text")
+                };
+                let mut face = match m.code {
+                    true => font(MONO_FONT),
+                    false => font(UI_FONT),
+                };
+                if m.bold {
+                    face = face.bold();
+                }
+                if m.italic {
+                    face = face.italic();
+                }
+                runs.push(TextRun {
+                    len: span.text.len(),
+                    font: face,
+                    color,
+                    background_color: m.code.then(|| self.p.get("track")),
+                    underline: span.link.as_ref().map(|_| UnderlineStyle {
+                        thickness: px(1.0),
+                        color: Some(color),
+                        wavy: false,
+                    }),
+                    strikethrough: m.strike.then(|| StrikethroughStyle {
+                        thickness: px(1.0),
+                        color: Some(color),
+                    }),
+                });
+                plain.push_str(&span.text);
+            }
         }
-        StyledText::new(plain).with_runs(runs)
+        let shown = plain.clone();
+        (StyledText::new(plain).with_runs(runs), shown)
     }
 
     fn stat(
@@ -1958,48 +2005,6 @@ struct PieView<'a> {
     color: ColorScale,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum Inline {
-    Plain,
-    Strong,
-    Code,
-}
-
-fn inline_markdown(text: &str) -> Vec<(&str, Inline)> {
-    let mut out = vec![];
-    let mut rest = text;
-    while !rest.is_empty() {
-        let bold = rest.find("**").and_then(|at| {
-            let inner = &rest[at + 2..];
-            let end = inner.find('*')?;
-            (end > 0 && inner[end..].starts_with("**")).then_some((
-                at,
-                at + 2 + end,
-                2,
-                Inline::Strong,
-            ))
-        });
-        let code = rest.find('`').and_then(|at| {
-            let end = rest[at + 1..].find('`')?;
-            (end > 0).then_some((at, at + 1 + end, 1, Inline::Code))
-        });
-        let next = match (bold, code) {
-            (Some(b), Some(c)) => Some(if b.0 < c.0 { b } else { c }),
-            (b, c) => b.or(c),
-        };
-        let Some((start, end, marks, kind)) = next else {
-            out.push((rest, Inline::Plain));
-            break;
-        };
-        if start > 0 {
-            out.push((&rest[..start], Inline::Plain));
-        }
-        out.push((&rest[start + marks..end], kind));
-        rest = &rest[end + marks..];
-    }
-    out
-}
-
 /// The columns a table keeps in `room` pixels, with their widths, like
 /// `tableColumns` in `web/src/fit.ts`: while the least widths don't fit, drop a
 /// column, lowest priority first (of equal ones the rightmost, never the
@@ -2062,19 +2067,5 @@ mod tests {
         let kept = table_columns(&natural, &least, &[0, 0, 0], 60.0);
         assert_eq!(kept[0].0, 0);
         assert_eq!(kept.len(), 1);
-    }
-
-    #[test]
-    fn reads_inline_markdown() {
-        assert_eq!(
-            inline_markdown("a **b** `c`"),
-            [
-                ("a ", Inline::Plain),
-                ("b", Inline::Strong),
-                (" ", Inline::Plain),
-                ("c", Inline::Code)
-            ]
-        );
-        assert_eq!(inline_markdown("2 * 3"), [("2 * 3", Inline::Plain)]);
     }
 }

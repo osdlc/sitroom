@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import type { Cell, Thresholds, Widget } from '../contract'
-import { inlineMarkdown } from '../format'
 import { webUrl } from '../actions'
 import { stableKeys } from '../motion'
 import { toneColor } from '../colors'
@@ -15,6 +14,9 @@ import PieChart from './PieChart.vue'
 import ClockFace from './ClockFace.vue'
 import DisplayText from './DisplayText.vue'
 import SeriesChart from './SeriesChart.vue'
+// The markdown renderer is most of the page's script, so it loads with the
+// first markdown text shown.
+const MarkdownText = defineAsyncComponent(() => import('./MarkdownText.vue'))
 
 defineOptions({ name: 'WidgetView' })
 const props = defineProps<{ widget: Widget }>()
@@ -43,16 +45,8 @@ const keys = computed(() => {
 </script>
 
 <template>
-  <p v-if="w.type === 'text'" class="w-text">
-    <template v-if="w.markdown">
-      <template v-for="(part, i) in inlineMarkdown(w.text)" :key="i">
-        <strong v-if="part.kind === 'strong'">{{ part.text }}</strong>
-        <code v-else-if="part.kind === 'code'">{{ part.text }}</code>
-        <template v-else>{{ part.text }}</template>
-      </template>
-    </template>
-    <template v-else>{{ w.text }}</template>
-  </p>
+  <MarkdownText v-if="w.type === 'text' && w.markdown" :source="w.text" />
+  <p v-else-if="w.type === 'text'" class="w-text">{{ w.text }}</p>
 
   <div v-else-if="w.type === 'stat'" class="w-stat" :data-status="w.status ?? undefined">
     <span class="label">{{ w.label }}</span>

@@ -28,10 +28,10 @@ async fn demo_tiles() -> (Vec<ScreenLayout>, BTreeMap<String, TileUpdate>) {
     let config = sitroom_core::config::parse(sitroom_core::config::DEFAULT_CONFIG).unwrap();
     let mut tiles = BTreeMap::new();
     for (id, m) in &config.modules {
-        if m.builtin.as_deref() != Some("demo") {
+        let Some(builtin @ ("demo" | "note")) = m.builtin.as_deref() else {
             continue;
-        }
-        let mut module = sitroom_modules::builtin("demo").unwrap();
+        };
+        let mut module = sitroom_modules::builtin(builtin).unwrap();
         module.init(m.config.clone()).await.unwrap();
         let mut history: HashMap<(String, String), Vec<(i64, f64)>> = HashMap::new();
         let mut view = None;
@@ -53,7 +53,8 @@ async fn demo_tiles() -> (Vec<ScreenLayout>, BTreeMap<String, TileUpdate>) {
             },
         );
     }
-    // Every placed tile that's a demo tile; others (cpu, github…) aren't run here.
+    // Every placed tile that's a demo or note tile; others (cpu, github…)
+    // aren't run here.
     let screens = config
         .screens
         .iter()

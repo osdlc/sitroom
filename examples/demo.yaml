@@ -1,5 +1,7 @@
-# Demo layout: screens using every tile size and widget style. This is
-# also the default config when ~/.config/sitroom/config.yaml doesn't exist.
+# Demo layout: a first screen of instructions, a system screen, then screens
+# using every tile size and widget style. This is also the default config when
+# ~/.config/sitroom/config.yaml doesn't exist, and the starter template for a
+# new dashboard.
 #
 #   cargo run -p sitroom -- serve --config examples/demo.yaml
 #   cargo run -p sitroom -- tui   --config examples/demo.yaml
@@ -24,9 +26,40 @@ theme: auto
 #   screens: [showcase, charts, meters]
 
 modules:
-  # Listed so the "live" screen is valid even where cswap isn't installed
+  # Listed so the "agents" screen is valid even where cswap isn't installed
   # (the tile then shows an error instead).
   cswap: {}
+
+  # ---- start here: fixed text with the `note` built-in (markdown) ----
+  welcome:
+    builtin: note
+    config:
+      title: Welcome to sitroom
+      text: |
+        This demo shows until you make a dashboard of your own.
+
+        # Get around
+        - `1`–`8` or `Tab`: screens (`[` and `]` in a browser)
+        - Arrows or `hjkl`: tiles. `Enter` goes into one
+        - `?`: every key. `q`: quit
+
+        # Terminal or browser
+        - `sitroom tui`: here, in the terminal
+        - `sitroom serve`: the same, in your browser
+  yours:
+    builtin: note
+    config:
+      title: Make it yours
+      text: |
+        # Start from this demo
+        - In a browser, **Save as…** keeps a copy to change
+        - `e` there edits the screens
+        - `sitroom` alone lists your saved dashboards
+
+        # Or write your own
+        - `sitroom config` prints where the file goes
+        - `sitroom widgets` lists what you can add
+        - Tutorial: https://osdlc.github.io/sitroom/tutorial/
 
   # ---- showcase ----
   hero:
@@ -165,6 +198,19 @@ modules:
 
 # Sizes on the 12-column grid: small 3x1, medium 4x2, large 6x3, wide 8x2, tall 4x4.
 screens:
+  - name: start here
+    tiles:
+      - { module: welcome, size: large }
+      - { module: yours, size: large }
+  - name: system
+    tiles:
+      - { module: cpu, size: wide }
+      - { module: memory, size: medium }
+      - { module: network, size: medium }
+      - { module: disk, size: medium }
+      - { module: gpu, size: medium }
+      - { module: processes, size: wide }
+      - { module: uptime, size: medium }
   - name: showcase
     tiles:
       - { module: hero, size: large }
@@ -208,24 +254,9 @@ screens:
       - { module: kpis, size: medium }
       - { module: worker-log, size: large }
       - { module: budgets, size: large }
-  - name: github
-    tiles:
-      - { module: github-prs, size: large }
-      - { module: github-issues, size: large }
   - name: agents
     tiles:
       - { module: cswap, size: wide }
       - { module: codex, size: medium }
       - { module: copilot, size: medium }
       - { module: github-prs, size: wide }
-  - name: live
-    tiles:
-      - { module: cpu, size: wide }
-      - { module: gpu, size: medium }
-      - { module: memory, size: medium }
-      - { module: network, size: medium }
-      - { module: disk, size: medium }
-      - { module: cswap, size: medium }
-      - { module: processes, size: wide }
-      - { module: github-prs, size: medium }
-      - { module: uptime, size: large }

@@ -6,6 +6,20 @@ released on their own; they record the stages the project was built in.
 
 ## Unreleased
 
+- **A first screen that says what to do.** The built-in demo (no config file yet, and the
+  starter template for a new dashboard) opens on "start here": the keys, the terminal and
+  browser views, and how to make your own. The second screen, "system", shows this machine:
+  CPU, memory, network, disks, GPU, processes and uptime checks. The showcase screens follow;
+  the "live" and "github" screens are gone (their tiles are on "system" and "agents").
+- **`note`: fixed text from the config.** A built-in module in the system bundle:
+  `config: { text: ..., title: ... }`, in markdown.
+- **Markdown in text widgets is full markdown.** Was `**bold**` and `` `code` `` only; now
+  CommonMark and GFM (headings, lists, task lists, quotes, tables, links), with Obsidian's
+  wikilinks, callouts and `==highlights==`. Single line breaks are kept, as before. The web view
+  renders it with `@osdlc/markdown-render`, loaded with the first markdown tile; the terminal
+  view and the native app read it with comrak and show a link's URL after its text. A module
+  whose text has `#`, `-` or `1.` at the start of a line now gets a heading or a list.
+
 - **Linux packages and static builds.** The release adds static `-linux-musl` archives, which run
   on any Linux (Alpine and old glibc included), and `.deb`, `.rpm` and Alpine `.apk` packages
   made from them. The install script picks the static build when the system has no glibc 2.35

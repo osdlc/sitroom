@@ -333,7 +333,9 @@ The tile shows the error's `message`. A failed render keeps the last good view, 
 A widget is a JSON object with a `type`. Optional fields can be left out.
 
 ```jsonc
-{"type":"text","text":"**bold** and `code`","markdown":true}
+{"type":"text","text":"# Heading\n- **bold** and `code`","markdown":true}
+// markdown: CommonMark and GFM with Obsidian's wikilinks, callouts and ==highlights==;
+// single line breaks are kept. The terminal views show a link's URL after its text.
 
 {"type":"stat","label":"Errors","value":"1.2","unit":"%","delta":"+0.3","status":"warn"}
 

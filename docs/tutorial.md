@@ -47,8 +47,10 @@ Start the terminal view:
 sitroom tui
 ```
 
-You have no config file yet, so it shows the built-in demo: eight screens of made-up data. Press
-`1` to `8` or `Tab` to switch screens, `?` for help and `q` to quit.
+You have no config file yet, so it shows the built-in demo: eight screens. The first, "start
+here", lists the keys and what to do next, the second shows this machine (CPU, memory, disks,
+network, processes), and the rest show every widget with made-up data. Press `1` to `8` or `Tab`
+to switch screens, `?` for help and `q` to quit.
 
 Now the web view:
 

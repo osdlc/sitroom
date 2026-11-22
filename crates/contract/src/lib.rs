@@ -157,7 +157,8 @@ pub enum Widget {
     Text {
         /// The text to show.
         text: String,
-        /// Read markdown in `text`: `**bold**`, and code between backticks.
+        /// Read `text` as markdown: CommonMark and GFM, with Obsidian's wikilinks,
+        /// callouts and `==highlights==`. Single line breaks are kept.
         #[serde(default)]
         markdown: bool,
     },

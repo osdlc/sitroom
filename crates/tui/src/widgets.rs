@@ -48,16 +48,7 @@ pub fn draw_tile(f: &mut Canvas, p: &Palette, area: Rect, tile: &TileUpdate, hit
 fn draw_widget(f: &mut Canvas, p: &Palette, area: Rect, widget: &Widget, hits: &mut Hits) {
     match widget {
         Widget::Text { text, markdown } => {
-            let lines: Vec<Line> = text
-                .split('\n')
-                .map(|l| {
-                    if *markdown {
-                        Line::from(inline_markdown(p, l))
-                    } else {
-                        Line::raw(l)
-                    }
-                })
-                .collect();
+            let lines = text_lines(p, text, *markdown, area.width);
             f.render_widget(Paragraph::new(lines).wrap(Wrap { trim: false }), area);
         }
         Widget::Stat {
@@ -645,7 +636,7 @@ fn want(widget: &Widget, width: u16) -> Want {
     let fixed = |rows: u16| Want { rows, grows: false };
     let grows = |rows: u16| Want { rows, grows: true };
     match widget {
-        Widget::Text { text, .. } => fixed(text_rows(text, width).max(1)),
+        Widget::Text { text, markdown } => fixed(text_rows(text, *markdown, width).max(1)),
         Widget::Stat { .. } | Widget::Gauge { .. } => fixed(1),
         // Value line plus a few rows of plot (4 dots each in braille).
         Widget::Series { mirrored, .. } => grows(if *mirrored { 7 } else { 5 }),
@@ -875,40 +866,74 @@ pub fn draw_waiting(f: &mut Canvas, p: &Palette, area: Rect, tile_id: &str) {
 }
 
 /// Rows a text needs at this width: each of its lines, wrapped.
-fn text_rows(text: &str, width: u16) -> u16 {
+fn text_rows(text: &str, markdown: bool, width: u16) -> u16 {
     let width = width.max(1);
-    text.split('\n')
+    let lines: Vec<String> = match markdown {
+        true => sitroom_core::markdown::lines(text)
+            .iter()
+            .map(|l| l.text())
+            .collect(),
+        false => text.split('\n').map(Into::into).collect(),
+    };
+    lines
+        .iter()
         .map(|l| (l.chars().count() as u16).div_ceil(width).max(1))
         .fold(0, u16::saturating_add)
 }
 
-/// The small markdown subset text widgets support: `**bold**` and `` `code` ``.
-fn inline_markdown<'a>(p: &Palette, text: &'a str) -> Vec<Span<'a>> {
-    let mut spans = vec![];
-    let mut rest = text;
-    while !rest.is_empty() {
-        let next = [
-            ("**", Style::new().add_modifier(Modifier::BOLD)),
-            ("`", Style::new().fg(p.accent)),
-        ]
-        .into_iter()
-        .filter_map(|(mark, style)| {
-            let start = rest.find(mark)?;
-            let len = rest[start + mark.len()..].find(mark)?;
-            Some((start, mark.len(), len, style))
-        })
-        .min_by_key(|(start, ..)| *start);
-        let Some((start, mark, len, style)) = next else {
-            spans.push(Span::raw(rest));
-            break;
-        };
-        if start > 0 {
-            spans.push(Span::raw(&rest[..start]));
-        }
-        spans.push(Span::styled(&rest[start + mark..start + mark + len], style));
-        rest = &rest[start + mark + len + mark..];
+/// A text widget's lines: markdown with its styles (see
+/// `sitroom_core::markdown`), or the text as it is.
+fn text_lines(p: &Palette, text: &str, markdown: bool, width: u16) -> Vec<Line<'static>> {
+    use sitroom_core::markdown::{self, LineKind};
+    if !markdown {
+        return text.split('\n').map(|l| Line::raw(l.to_string())).collect();
     }
-    spans
+    markdown::lines(text)
+        .into_iter()
+        .map(|line| match line.kind {
+            LineKind::Rule => {
+                Line::styled("─".repeat(width.max(1) as usize), Style::new().fg(p.muted))
+            }
+            kind => {
+                let spans: Vec<Span> = line
+                    .spans
+                    .into_iter()
+                    .map(|s| {
+                        let style = span_style(p, &s);
+                        Span::styled(s.text, style)
+                    })
+                    .collect();
+                match kind {
+                    LineKind::Heading(_) => Line::from(spans).style(Style::new().fg(p.accent)),
+                    _ => Line::from(spans),
+                }
+            }
+        })
+        .collect()
+}
+
+fn span_style(p: &Palette, span: &sitroom_core::markdown::Span) -> Style {
+    let m = span.mark;
+    let mut style = Style::new();
+    let mut add = |on: bool, modifier: Modifier| {
+        if on {
+            style = style.add_modifier(modifier);
+        }
+    };
+    add(m.bold, Modifier::BOLD);
+    add(m.italic, Modifier::ITALIC);
+    add(m.strike, Modifier::CROSSED_OUT);
+    add(span.link.is_some(), Modifier::UNDERLINED);
+    if m.code {
+        style = style.fg(p.accent);
+    } else if m.highlight {
+        style = style.fg(p.warn);
+    } else if span.link.is_some() {
+        style = style.fg(p.info);
+    } else if m.muted {
+        style = style.fg(p.muted);
+    }
+    style
 }
 
 #[cfg(test)]
@@ -943,7 +968,9 @@ mod tests {
             markdown: true,
         };
         assert_eq!(want(&widget, 10).rows, 2);
-        assert_eq!(text_rows("a\n\n123456", 4), 4);
+        assert_eq!(text_rows("a\n\n123456", false, 4), 4);
+        // Markdown counts its lines once read: a list item gets a bullet.
+        assert_eq!(text_rows("# Hi\n\n- 1234567", true, 4), 5);
         let area = Rect::new(0, 0, 10, 2);
         let mut buf = Buffer::empty(area);
         let p = Palette::for_theme(Theme::Dark, false);

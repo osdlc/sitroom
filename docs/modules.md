@@ -14,7 +14,7 @@ crate (`crates/modules`):
 
 | Bundle | Folder | Modules |
 |---|---|---|
-| system | `crates/modules/src/system/` | cpu, memory, gpu, network, disk, processes, process, log, uptime, textfile, battery, cmdrunner, security, http, file, screensaver |
+| system | `crates/modules/src/system/` | cpu, memory, gpu, network, disk, processes, process, log, uptime, textfile, note, battery, cmdrunner, security, http, file, screensaver |
 | dev | `crates/modules/src/dev/` | github-prs, github-issues, jira, linear, forgejo, git |
 | fun | `crates/modules/src/fun/` | demo, clock, hackernews, feedreader, subreddit, devto, mempool, crypto, scores |
 | agents | `crates/modules/src/agents/` | codex, copilot, cursor, antigravity, gemini, opencode, pi, and the bundled cswap plugin |

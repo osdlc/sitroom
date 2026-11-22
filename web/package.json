@@ -12,6 +12,8 @@
     "gen:themes": "cargo run -q -p sitroom-contract --example color_themes > src/themes.ts"
   },
   "dependencies": {
+    "@osdlc/markdown-render": "^0.8.2",
+    "@osdlc/markdown-render-vue": "^0.8.1",
     "vue": "^3.5.44"
   },
   "devDependencies": {

@@ -5,6 +5,14 @@ import { defineConfig } from 'vite'
 // http://localhost:5173/?boot=<token> link. The proxy forwards API and WebSocket traffic.
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    rolldownOptions: {
+      // Optional peers of @osdlc/markdown-render (MarkdownText.vue), which
+      // pnpm installs anyway. Math is off, and a mermaid fence shows its
+      // source, so neither is bundled.
+      external: ['katex', 'mermaid'],
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,
