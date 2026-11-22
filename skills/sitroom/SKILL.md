@@ -41,7 +41,9 @@ cargo install --path crates/cli        # puts `sitroom` in ~/.cargo/bin
 | `sitroom open` | Sign another browser tab in. `--no-open` prints the link instead |
 | `sitroom serve --port 7900` | Another port |
 | `sitroom --config path.yaml tui` | Use another config file |
-| `sitroom --dashboard work serve` | Lay a saved dashboard over the config |
+| `sitroom --dashboard work serve` | Lay a saved dashboard over the config (without it, the one named `default` when saved) |
+| `sitroom` / `sitroom serve --pick` | Choose a saved dashboard from a list, then open the TUI / web view |
+| `sitroom dashboards list --json` | The saved dashboards and the one in use, for a script |
 
 When you start it for someone, run `sitroom serve -d --no-open` and give them the printed
 `http://127.0.0.1:7878/?boot=…` link. The link signs in one tab, works once, and expires after

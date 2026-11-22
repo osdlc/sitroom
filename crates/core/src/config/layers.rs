@@ -2,7 +2,8 @@
 //! wins):
 //!
 //! 1. the machine file, `config.yaml` (or `--config`);
-//! 2. a saved dashboard, when one is chosen (`--dashboard work`);
+//! 2. a saved dashboard: the one chosen (`--dashboard work`), else the one
+//!    named `default` when it is saved (unless `--no-dashboard`);
 //! 3. the project file, `.sitroom.yaml`, found by walking up from the
 //!    working directory. Only used once trusted (see `trust`): it can start
 //!    programs.
@@ -17,7 +18,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use serde_json::{Map, Value};
 
-use crate::config::dashboards::Registry;
+use crate::config::dashboards::{DEFAULT, Registry};
 use crate::config::trust::Trust;
 use crate::config::{Config, DEFAULT_CONFIG, Part, parse};
 
@@ -29,8 +30,13 @@ pub const PROJECT_FILE: &str = ".sitroom.yaml";
 pub struct Sources {
     /// The machine file. `None`: the default path.
     pub machine: Option<PathBuf>,
-    /// A saved dashboard, by name.
+    /// A saved dashboard, by name. `None`: the one named `default`, when it
+    /// is saved and `no_default` is off.
     pub dashboard: Option<String>,
+    /// With no `dashboard`, use the machine file alone even when a dashboard
+    /// named `default` is saved (`--no-dashboard`, or switching to
+    /// `config.yaml` alone).
+    pub no_default: bool,
     /// Look for a project file from here upward. `None`: no project layer.
     pub project_from: Option<PathBuf>,
     /// Where saved dashboards are. `None`: the user's config home.
@@ -40,6 +46,24 @@ pub struct Sources {
 }
 
 impl Sources {
+    /// The saved-dashboards folder.
+    pub fn registry(&self) -> Result<Registry> {
+        match &self.registry {
+            Some(dir) => Ok(Registry::new(dir)),
+            None => Registry::open_default(),
+        }
+    }
+
+    /// The saved dashboard to lay over the machine file: the one named, else
+    /// `default` when it is saved and `no_default` is off.
+    pub fn dashboard_in_use(&self) -> Option<String> {
+        if let Some(name) = &self.dashboard {
+            return Some(name.clone());
+        }
+        let default = self.registry().and_then(|r| r.path(DEFAULT)).ok()?;
+        (!self.no_default && default.is_file()).then(|| DEFAULT.to_string())
+    }
+
     /// The trust list to check project files against.
     pub fn trust(&self) -> Result<Trust> {
         match &self.trust {
@@ -208,14 +232,11 @@ pub fn load(sources: &Sources) -> Result<Layered> {
             path: machine.clone(),
         });
     }
-    if let Some(name) = &sources.dashboard {
-        let registry = match &sources.registry {
-            Some(dir) => Registry::new(dir),
-            None => Registry::open_default()?,
-        };
+    let dashboard = sources.dashboard_in_use();
+    if let Some(name) = &dashboard {
         files.push(Layer {
             kind: LayerKind::Dashboard,
-            path: registry.find(name)?,
+            path: sources.registry()?.find(name)?,
         });
     }
     let mut untrusted = None;
@@ -330,7 +351,7 @@ pub fn load(sources: &Sources) -> Result<Layered> {
         config,
         machine,
         exists: true,
-        dashboard: sources.dashboard.clone(),
+        dashboard,
         layers: files,
         module_dirs,
         origins,
@@ -474,6 +495,7 @@ screens:
         let machine = t.write("config.yaml", MACHINE);
         let l = load(&Sources {
             machine: Some(machine.clone()),
+            registry: Some(t.0.join("dashboards")),
             ..Default::default()
         })
         .unwrap();
@@ -495,6 +517,47 @@ screens:
         .unwrap();
         assert!(!l.exists);
         assert_eq!(l.config, parse(DEFAULT_CONFIG).unwrap());
+    }
+
+    #[test]
+    fn a_dashboard_named_default_is_used_when_none_is_chosen() {
+        let t = Temp::new("default");
+        let machine = t.write("config.yaml", MACHINE);
+        let sources = Sources {
+            machine: Some(machine.clone()),
+            registry: Some(t.0.join("dashboards")),
+            ..Default::default()
+        };
+        // Not saved: the machine file alone.
+        assert_eq!(load(&sources).unwrap().dashboard, None);
+
+        let default = t.write(
+            "dashboards/default.yaml",
+            "screens:\n  - name: start\n    tiles: [{ module: clock }]\n",
+        );
+        t.write("dashboards/work.yaml", "screens: []\n");
+        let l = load(&sources).unwrap();
+        assert_eq!(l.dashboard.as_deref(), Some("default"));
+        assert_eq!(l.write_path(), default);
+        assert_eq!(names(&l.config), ["start"]);
+        // Laid over the machine file like any other dashboard.
+        assert_eq!(l.config.theme, Theme::Dark);
+
+        // A chosen dashboard wins.
+        let chosen = Sources {
+            dashboard: Some("work".into()),
+            ..sources.clone()
+        };
+        assert_eq!(load(&chosen).unwrap().dashboard.as_deref(), Some("work"));
+
+        // `--no-dashboard`: the machine file alone.
+        let alone = Sources {
+            no_default: true,
+            ..sources
+        };
+        let l = load(&alone).unwrap();
+        assert_eq!(l.dashboard, None);
+        assert_eq!(l.write_path(), machine);
     }
 
     #[test]
@@ -550,6 +613,7 @@ screens:
         std::fs::create_dir_all(&nested).unwrap();
         let l = load(&Sources {
             machine: Some(machine.clone()),
+            registry: Some(t.0.join("dashboards")),
             project_from: Some(nested),
             trust: Some(t.trust_file()),
             ..Default::default()
@@ -587,6 +651,7 @@ screens:
         let machine = t.write("home/config.yaml", "modules:\ntheme: dark\n");
         let l = load(&Sources {
             machine: Some(machine.clone()),
+            registry: Some(t.0.join("dashboards")),
             ..Default::default()
         })
         .unwrap();
@@ -596,6 +661,7 @@ screens:
         t.trusted("repo/.sitroom.yaml", "modules:\nscreens:\n");
         let l = load(&Sources {
             machine: Some(machine),
+            registry: Some(t.0.join("dashboards")),
             project_from: Some(t.0.join("repo")),
             trust: Some(t.trust_file()),
             ..Default::default()
@@ -616,6 +682,7 @@ screens:
         );
         let sources = Sources {
             machine: Some(machine),
+            registry: Some(t.0.join("dashboards")),
             project_from: Some(t.0.join("repo")),
             trust: Some(t.trust_file()),
             ..Default::default()
@@ -646,6 +713,7 @@ screens:
         t.trusted("repo/.sitroom.yaml", "themes: dark\n");
         let err = load(&Sources {
             machine: Some(machine),
+            registry: Some(t.0.join("dashboards")),
             project_from: Some(t.0.join("repo")),
             trust: Some(t.trust_file()),
             ..Default::default()
@@ -661,6 +729,7 @@ screens:
         t.trusted("repo/.sitroom.yaml", "# nothing yet\n");
         let l = load(&Sources {
             machine: Some(machine),
+            registry: Some(t.0.join("dashboards")),
             project_from: Some(t.0.join("repo")),
             trust: Some(t.trust_file()),
             ..Default::default()

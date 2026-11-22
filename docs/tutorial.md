@@ -599,7 +599,9 @@ sitroom --dashboard focus tui      # or: sitroom --dashboard focus serve
 
 `import` checks the file, saves it in `~/.config/sitroom/dashboards/focus.yaml`, and lists what
 it needs that you don't have and the programs it runs. You can also write the file in that folder
-yourself. In the web view, a switcher next to the title picks a saved dashboard.
+yourself. In the web view, a switcher next to the title picks a saved dashboard; in the TUI,
+press `d`. Run `sitroom` with no command to choose one from a list before it opens. Name one
+`default` and it opens whenever you don't choose.
 
 To share one, export it and import the file on the other machine:
 

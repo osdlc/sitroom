@@ -847,7 +847,7 @@ pub struct AddOutcome {
 /// A saved dashboard, for the switcher.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct DashboardSummary {
-    /// Sitroom's name.
+    /// The dashboard's name.
     pub name: String,
     /// A line about what it shows.
     #[serde(default)]
@@ -962,15 +962,28 @@ pub enum ClientMessage {
         #[serde(default)]
         name: Option<String>,
     },
-    /// Save a new dashboard and switch to it: a copy of the one in use, or
-    /// one empty screen. The name is made into a slug.
+    /// Save a new dashboard and switch to it. The name is made into a slug.
     CreateDashboard {
         /// The new dashboard's name, before it is made into a slug.
         name: String,
-        /// Copy sitroom in use. `false`: one empty screen.
+        /// What it starts as.
         #[serde(default)]
-        copy: bool,
+        from: NewDashboardFrom,
     },
+}
+
+/// What a new dashboard starts as.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NewDashboardFrom {
+    /// One empty screen; the modules in `config.yaml` keep running.
+    #[default]
+    Blank,
+    /// A copy of the dashboard in use: the file settings are saved to,
+    /// comments included, or the demo when that is what's on screen.
+    Copy,
+    /// The starter template: the built-in demo's screens, for now.
+    Starter,
 }
 
 /// Messages the host sends to the web view over its WebSocket.

@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { runAction } from './actions'
 import { addSeq, isOutcomeOf, type PendingAdd } from './adds'
-import type { ClientMessage, ScreenLayout } from './contract'
+import type { ClientMessage, NewDashboardFrom, ScreenLayout } from './contract'
 import HelpPanel from './components/HelpPanel.vue'
 import ScreenEditor from './components/ScreenEditor.vue'
 import NewDashboardDialog from './components/NewDashboardDialog.vue'
@@ -158,10 +158,25 @@ watch(
 )
 
 /** The "new dashboard" dialog: starts as a copy or as blank, and what the outcome counter was when opened. */
-const newDashboard = ref<{ copy: boolean; before: number } | null>(null)
-function openNewDashboard(copy: boolean) {
+const newDashboard = ref<{ from: NewDashboardFrom; before: number } | null>(null)
+function openNewDashboard(from: NewDashboardFrom) {
   overlay.value = 'none'
-  newDashboard.value = { copy, before: settings.value?.config.created?.seq ?? 0 }
+  newDashboard.value = { from, before: settings.value?.config.created?.seq ?? 0 }
+}
+
+// `?edit` (from `sitroom serve --pick`): open the screen editor once the settings arrive.
+if (new URLSearchParams(location.search).has('edit')) {
+  const params = new URLSearchParams(location.search)
+  params.delete('edit')
+  const query = params.toString()
+  history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`)
+  watch(
+    () => settings.value != null,
+    (ready) => {
+      if (ready) nextTick(openEditor)
+    },
+    { once: true },
+  )
 }
 /** The dashboard exists and the server has switched to it. A blank one opens in the editor. */
 function dashboardCreated(blank: boolean) {
@@ -195,8 +210,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
       </option>
     </select>
     <template v-if="settings">
-      <button type="button" class="help-btn" title="Start a new dashboard" @click="openNewDashboard(false)">+ New</button>
-      <button type="button" class="help-btn" title="Save a copy of this dashboard under a new name" @click="openNewDashboard(true)">
+      <button type="button" class="help-btn" title="Start a new dashboard" @click="openNewDashboard('starter')">+ New</button>
+      <button type="button" class="help-btn" title="Save a copy of this dashboard under a new name" @click="openNewDashboard('copy')">
         Save as…
       </button>
     </template>
@@ -286,7 +301,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
   <NewDashboardDialog
     v-if="newDashboard && settings"
     :settings="settings"
-    :copy="newDashboard.copy"
+    :from="newDashboard.from"
     :before="newDashboard.before"
     @close="newDashboard = null"
     @created="dashboardCreated"

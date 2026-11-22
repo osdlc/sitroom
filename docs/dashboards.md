@@ -28,6 +28,8 @@ Names are lowercase letters, digits and dashes (`work`, `on-call`).
 
 ```sh
 sitroom --dashboard work serve      # or: tui
+sitroom                             # in a terminal: choose one from a list, then the TUI
+sitroom serve --pick                # the same, then the web view
 sitroom dashboards list             # saved dashboards, and the project file if one applies here
 sitroom import ~/Downloads/on-call.yaml          # saved as "on-call"
 sitroom import https://example.com/team.yaml --name team
@@ -44,16 +46,45 @@ built-in modules' settings): opening a dashboard runs them, so read them first. 
 and only `https://` URLs are accepted.
 
 To make one from the app, use **+ New** or **Save as…** next to the title (the web view, the
-desktop app and the GPUI app). **Blank** starts with one empty screen and opens the screen
-editor; **Copy of current** copies the file settings are saved to, comments included, and then
+desktop app and the GPUI app), or **+ new dashboard** in the list `sitroom` shows at
+startup. The **starter template** has ready-made screens to change (the demo's, for now).
+**Blank** starts with one empty screen and opens the screen editor; **Copy of current** copies the file settings are saved to, comments included, and then
 changes go to the copy. Either way the dashboard opens at once. A blank dashboard still has the
 modules from `config.yaml` running, as `modules:` merge (see [Precedence](#precedence)); only
 the screens start empty. A copy keeps relative paths as written, and they then start in
 `dashboards/`, so use `~/` or absolute paths in a file you copy.
 
-The web view has a switcher next to the title when there is at least one saved dashboard.
-Switching starts and stops only the modules that differ. The choice lasts while the server
-runs; start with `--dashboard` to pick one at startup.
+## Choosing one
+
+With no `--dashboard`, sitroom opens the saved dashboard named `default` when there is one,
+and `config.yaml` alone otherwise (the built-in demo when there is no `config.yaml` either).
+`default` is laid over `config.yaml` like any other dashboard. `--no-dashboard` uses
+`config.yaml` alone even when `default` is saved.
+
+To choose at startup:
+
+- `sitroom` with no command, in a terminal, lists the saved dashboards and opens the one you
+  choose in the TUI. `sitroom tui --pick` and `sitroom serve --pick` do the same for the TUI
+  and the web view. Use the arrow keys and Enter, or the entry's number; Esc quits. The list
+  ends with `config.yaml` alone and **+ new dashboard**, which asks for a name and what to
+  start from: the starter template, blank, or a copy of the one in use.
+  - `e` in `serve --pick` opens the chosen dashboard with the screen editor open in the
+    browser (a new blank one opens there too).
+  - `e` in the TUI's list opens the file in `$VISUAL` or `$EDITOR` (default `vi`) and comes
+    back to the list when you close it.
+
+  With no saved dashboards there is nothing to choose, and it opens at once. With no
+  terminal, `--pick` prints the list and exits.
+- `sitroom dashboards list --json` lists them for a script.
+
+While running:
+
+- The TUI lists them on `d` (or a click on **d dashboards** in the footer).
+- The web view, the desktop app and the GPUI app have a switcher next to the title when there
+  is at least one saved dashboard.
+
+Switching starts and stops only the modules that differ. The choice lasts while sitroom runs;
+the next start opens `default` (or `--dashboard`) again.
 
 ## The project file
 
@@ -109,7 +140,8 @@ and the settings screen say so too.
 The files are read in this order. A later file wins:
 
 1. **Machine file**: `~/.config/sitroom/config.yaml`, or `--config`.
-2. **Saved dashboard**: the one named by `--dashboard` (or picked in the web switcher).
+2. **Saved dashboard**: the one named by `--dashboard` or chosen in a switcher, else the one
+   named `default` when it is saved (see [Choosing one](#choosing-one)).
 3. **Project file**: `.sitroom.yaml` from the working directory upward, once trusted.
 
 How each key merges:

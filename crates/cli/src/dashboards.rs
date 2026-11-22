@@ -14,11 +14,38 @@ use sitroom_core::config::{Config, parse};
 use sitroom_modules::runtime::{known_modules, registry};
 
 /// Print the saved dashboards, and the project file if one applies here.
-pub fn list(sources: &Sources) -> Result<()> {
+/// `json`: one `dashboards` document instead (docs/cli.md).
+pub fn list(sources: &Sources, json: bool) -> Result<()> {
     let registry = registry(sources)?;
     let (saved, errors) = registry.list();
     for err in &errors {
-        eprintln!("sitroom: warning: {err}");
+        crate::warn(err);
+    }
+    let in_use = sources.dashboard_in_use();
+    let project = sources.project_from.as_deref().and_then(find_project);
+    let trusted = project
+        .as_deref()
+        .is_some_and(|p| sources.trust().is_ok_and(|t| t.allows(p)));
+    if json {
+        let dashboards: Vec<_> = saved
+            .iter()
+            .map(|s| {
+                serde_json::json!({
+                    "name": s.name,
+                    "description": s.description,
+                    "path": s.path,
+                })
+            })
+            .collect();
+        return crate::print_json(
+            "dashboards",
+            &serde_json::json!({
+                "dir": registry.dir,
+                "inUse": in_use,
+                "dashboards": dashboards,
+                "project": project.map(|p| serde_json::json!({ "path": p, "trusted": trusted })),
+            }),
+        );
     }
     println!("{}", registry.dir.display());
     if saved.is_empty() {
@@ -26,7 +53,7 @@ pub fn list(sources: &Sources) -> Result<()> {
     }
     let width = saved.iter().map(|s| s.name.len()).max().unwrap_or(0);
     for s in &saved {
-        let mark = if sources.dashboard.as_deref() == Some(s.name.as_str()) {
+        let mark = if in_use.as_deref() == Some(s.name.as_str()) {
             "*"
         } else {
             " "
@@ -38,8 +65,8 @@ pub fn list(sources: &Sources) -> Result<()> {
         );
         println!("{}", line.trim_end());
     }
-    if let Some(project) = sources.project_from.as_deref().and_then(find_project) {
-        let note = if sources.trust().is_ok_and(|t| t.allows(&project)) {
+    if let Some(project) = project {
+        let note = if trusted {
             ""
         } else {
             " (not trusted, not used; see `sitroom trust`)"

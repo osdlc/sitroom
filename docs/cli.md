@@ -42,6 +42,7 @@ since it may quote a config file or a plugin.
 | `status` | `status` | `running`, and `url`, `pid` when running |
 | `stop` | `stop` | `stopped`, and `url`, `pid` when one was stopped |
 | `open` | `open` | `url` (the sign-in link), `pid` |
+| `dashboards list` | `dashboards` | `dir` (the saved-dashboards folder), `inUse` (a name, or `null` for `config.yaml` alone), `dashboards` (`name`, `description`, `path`), `project` (`path`, `trusted`, or `null`) |
 | `widgets` | `widgets` | `entries`: full catalog entries (`sitroom schema catalog-entry`) |
 | `plugin-check` | `plugin-check` | `plugin`, `manifest`, `renders`, `view`, `findings` |
 
@@ -52,7 +53,7 @@ On failure it prints an error document instead, and the error line on stderr as 
 ```
 
 `tui` and `serve` run until stopped and `schema` already prints JSON Schema, so they refuse
-`--json` with exit 2. `plugin`, `dashboards`, `import`, `export` and `trust` have no JSON form yet
+`--json` with exit 2. `plugin`, `import`, `export` and `trust` have no JSON form yet
 and refuse it the same way.
 
 ## Signing in to the web view
