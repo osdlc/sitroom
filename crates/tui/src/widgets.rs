@@ -1,11 +1,17 @@
 //! Drawing tiles and the widgets inside them.
 
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::rc::Rc;
+
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap};
 use sitroom_contract::rpc::LogLevel;
 use sitroom_contract::{Action, Cell as ViewCell, Status, TileUpdate, UptimeCheck, Widget};
+use sitroom_core::markdown;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::canvas::Canvas;
 use crate::charts;
@@ -868,51 +874,158 @@ pub fn draw_waiting(f: &mut Canvas, p: &Palette, area: Rect, tile_id: &str) {
 /// Rows a text needs at this width: each of its lines, wrapped.
 fn text_rows(text: &str, markdown: bool, width: u16) -> u16 {
     let width = width.max(1);
-    let lines: Vec<String> = match markdown {
-        true => sitroom_core::markdown::lines(text)
+    let rows = match markdown {
+        true => parsed(text)
             .iter()
-            .map(|l| l.text())
-            .collect(),
-        false => text.split('\n').map(Into::into).collect(),
+            .map(|l| match l.kind {
+                markdown::LineKind::Rule => 1,
+                _ => wrap(l, width as usize).len(),
+            })
+            .sum(),
+        false => text
+            .split('\n')
+            .map(|l| l.width().div_ceil(width as usize).max(1))
+            .sum(),
     };
-    lines
-        .iter()
-        .map(|l| (l.chars().count() as u16).div_ceil(width).max(1))
-        .fold(0, u16::saturating_add)
+    u16::try_from(rows).unwrap_or(u16::MAX)
 }
 
 /// A text widget's lines: markdown with its styles (see
-/// `sitroom_core::markdown`), or the text as it is.
+/// `sitroom_core::markdown`), wrapped to `width`, or the text as it is.
 fn text_lines(p: &Palette, text: &str, markdown: bool, width: u16) -> Vec<Line<'static>> {
-    use sitroom_core::markdown::{self, LineKind};
+    use markdown::LineKind;
     if !markdown {
         return text.split('\n').map(|l| Line::raw(l.to_string())).collect();
     }
-    markdown::lines(text)
-        .into_iter()
-        .map(|line| match line.kind {
-            LineKind::Rule => {
-                Line::styled("─".repeat(width.max(1) as usize), Style::new().fg(p.muted))
-            }
-            kind => {
-                let spans: Vec<Span> = line
-                    .spans
-                    .into_iter()
-                    .map(|s| {
-                        let style = span_style(p, &s);
-                        Span::styled(s.text, style)
-                    })
-                    .collect();
-                match kind {
-                    LineKind::Heading(_) => Line::from(spans).style(Style::new().fg(p.accent)),
-                    _ => Line::from(spans),
-                }
-            }
-        })
-        .collect()
+    let width = width.max(1);
+    let mut out = vec![];
+    for line in parsed(text).iter() {
+        if line.kind == LineKind::Rule {
+            out.push(Line::styled(
+                "─".repeat(width as usize),
+                Style::new().fg(p.muted),
+            ));
+            continue;
+        }
+        for row in wrap(line, width as usize) {
+            let spans: Vec<Span> = row
+                .into_iter()
+                .map(|s| {
+                    let style = span_style(p, &s);
+                    Span::styled(s.text, style)
+                })
+                .collect();
+            out.push(match line.kind {
+                LineKind::Heading(_) => Line::from(spans).style(Style::new().fg(p.accent)),
+                _ => Line::from(spans),
+            });
+        }
+    }
+    out
 }
 
-fn span_style(p: &Palette, span: &sitroom_core::markdown::Span) -> Style {
+thread_local! {
+    /// Texts parsed recently. A frame measures each text and then draws it,
+    /// and most frames show the same texts as the last one.
+    static PARSED: RefCell<HashMap<String, Rc<Vec<markdown::Line>>>> =
+        RefCell::new(HashMap::new());
+}
+
+/// `text` read as markdown, from `PARSED` when it was read recently.
+fn parsed(text: &str) -> Rc<Vec<markdown::Line>> {
+    PARSED.with_borrow_mut(|cache| {
+        if let Some(lines) = cache.get(text) {
+            return lines.clone();
+        }
+        if cache.len() >= 64 {
+            cache.clear();
+        }
+        let lines = Rc::new(markdown::lines(text));
+        cache.insert(text.into(), lines.clone());
+        lines
+    })
+}
+
+/// `line` cut into rows of at most `width` columns, at spaces where it can.
+/// Rows after the first start with the line's indent (a list item's spaces,
+/// a quote's bar), unless the indent leaves no room.
+fn wrap(line: &markdown::Line, width: usize) -> Vec<Vec<markdown::Span>> {
+    let indent = match line.indent.width() < width {
+        true => line.indent.as_str(),
+        false => "",
+    };
+    let muted = markdown::Mark {
+        muted: true,
+        ..Default::default()
+    };
+    let mut rows: Vec<Vec<markdown::Span>> = vec![vec![]];
+    let mut used = 0;
+    // Nothing on the row yet but its indent or a marker (muted spans): a word
+    // goes here even if it has to be cut.
+    let mut fresh = true;
+    for span in &line.spans {
+        for mut word in span.text.split_inclusive(' ') {
+            while !word.is_empty() {
+                if used + word.trim_end_matches(' ').width() <= width {
+                    // Spaces past the edge are dropped, not wrapped.
+                    let piece = match used + word.width() <= width {
+                        true => word,
+                        false => word.trim_end_matches(' '),
+                    };
+                    add(&mut rows, piece, span.mark, span.link.as_deref());
+                    used += piece.width();
+                    fresh &= span.mark.muted;
+                    break;
+                }
+                if fresh {
+                    // A word wider than the row: as much as fits, at least
+                    // one character.
+                    let mut cut = 0;
+                    let mut cols = 0;
+                    for (i, c) in word.char_indices() {
+                        let w = c.width().unwrap_or(0);
+                        if cut > 0 && used + cols + w > width {
+                            break;
+                        }
+                        cols += w;
+                        cut = i + c.len_utf8();
+                    }
+                    add(&mut rows, &word[..cut], span.mark, span.link.as_deref());
+                    word = &word[cut..];
+                }
+                // The space at the break goes with it.
+                if let Some(last) = rows.last_mut().and_then(|r| r.last_mut()) {
+                    last.text.truncate(last.text.trim_end_matches(' ').len());
+                }
+                rows.push(vec![]);
+                add(&mut rows, indent, muted, None);
+                used = indent.width();
+                fresh = true;
+                word = word.trim_start_matches(' ');
+            }
+        }
+    }
+    rows
+}
+
+/// `text` at the end of the last row, joined to the span before it when the
+/// styles match.
+fn add(rows: &mut [Vec<markdown::Span>], text: &str, mark: markdown::Mark, link: Option<&str>) {
+    let Some(row) = rows.last_mut() else { return };
+    if text.is_empty() {
+        return;
+    }
+    match row.last_mut() {
+        Some(last) if last.mark == mark && last.link.as_deref() == link => last.text.push_str(text),
+        _ => row.push(markdown::Span {
+            text: text.into(),
+            mark,
+            link: link.map(Into::into),
+        }),
+    }
+}
+
+fn span_style(p: &Palette, span: &markdown::Span) -> Style {
     let m = span.mark;
     let mut style = Style::new();
     let mut add = |on: bool, modifier: Modifier| {
@@ -969,8 +1082,9 @@ mod tests {
         };
         assert_eq!(want(&widget, 10).rows, 2);
         assert_eq!(text_rows("a\n\n123456", false, 4), 4);
-        // Markdown counts its lines once read: a list item gets a bullet.
-        assert_eq!(text_rows("# Hi\n\n- 1234567", true, 4), 5);
+        // Markdown counts its lines once read and wrapped: "Hi", a gap,
+        // "• 12", then three rows indented under the bullet.
+        assert_eq!(text_rows("# Hi\n\n- 1234567", true, 4), 6);
         let area = Rect::new(0, 0, 10, 2);
         let mut buf = Buffer::empty(area);
         let p = Palette::for_theme(Theme::Dark, false);
@@ -983,6 +1097,20 @@ mod tests {
         );
         assert_eq!(text(&buf, 0), "one       ");
         assert_eq!(text(&buf, 1), "two       ");
+    }
+
+    #[test]
+    fn wrapped_markdown_rows_keep_the_indent_and_the_bar() {
+        let p = Palette::for_theme(Theme::Dark, false);
+        let rows = |text: &str| -> Vec<String> {
+            text_lines(&p, text, true, 12)
+                .iter()
+                .map(|l| l.spans.iter().map(|s| s.content.as_ref()).collect())
+                .collect()
+        };
+        assert_eq!(rows("- one two three"), ["• one two", "  three"]);
+        assert_eq!(rows("> one two three"), ["│ one two", "│ three"]);
+        assert_eq!(rows("漢漢漢漢漢漢漢"), ["漢漢漢漢漢漢", "漢"]);
     }
 
     /// The demo widget at large lost its third gauge: a column inside a

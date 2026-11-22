@@ -11,8 +11,12 @@
 //!
 //! A link shows its URL after its text, since these renderers can't follow
 //! it. Lists get bullets or numbers, quotes and callouts a bar, task items a box,
-//! and blocks a blank line between them. Images show their alt text, HTML is
-//! shown as it is written, and front matter is left out.
+//! and blocks a blank line between them. Images show their alt text.
+//!
+//! As in the web view, HTML tags are hidden and the text between them is
+//! kept, so `Vec<String>` shows as `Vec` (write `` `Vec<String>` ``), and
+//! front matter is not read: a text widget's text is a module's output, not
+//! a note with properties.
 
 use comrak::nodes::{AstNode, ListType, NodeValue};
 use comrak::{Arena, Options, parse_document};
@@ -22,6 +26,9 @@ use comrak::{Arena, Options, parse_document};
 pub struct Line {
     pub kind: LineKind,
     pub spans: Vec<Span>,
+    /// What starts each row after the first when the line wraps: the
+    /// spaces under a list marker, a quote's bar. Draw it muted.
+    pub indent: String,
 }
 
 /// What a line is, for its style as a whole.
@@ -78,7 +85,6 @@ fn options() -> Options<'static> {
     e.ofm_block_ids = true;
     e.highlight = true;
     e.wikilinks_title_after_pipe = true;
-    e.front_matter_delimiter = Some("---".into());
     o
 }
 
@@ -112,6 +118,7 @@ impl Writer {
     fn open(&mut self, kind: LineKind) {
         self.close();
         let mut spans = vec![];
+        let indent = self.indent();
         let text: String = self
             .prefix
             .iter_mut()
@@ -131,7 +138,16 @@ impl Writer {
                 link: None,
             });
         }
-        self.line = Some(Line { kind, spans });
+        self.line = Some(Line {
+            kind,
+            spans,
+            indent,
+        });
+    }
+
+    /// The containers' prefixes after their first line.
+    fn indent(&self) -> String {
+        self.prefix.iter().map(|p| p.rest.as_str()).collect()
     }
 
     fn close(&mut self) {
@@ -163,8 +179,8 @@ impl Writer {
     /// A blank line between blocks, keeping the quote bars.
     fn gap(&mut self) {
         self.close();
-        let text: String = self.prefix.iter().map(|p| p.rest.as_str()).collect();
-        let text = text.trim_end();
+        let indent = self.indent();
+        let text = indent.trim_end();
         let spans = match text.is_empty() {
             true => vec![],
             false => vec![Span {
@@ -179,6 +195,7 @@ impl Writer {
         self.out.push(Line {
             kind: LineKind::Text,
             spans,
+            indent,
         });
     }
 
@@ -233,7 +250,11 @@ impl Writer {
             }
             NodeValue::CodeBlock(c) => self.literal(&c.literal, LineKind::Code),
             NodeValue::MathBlock(m) => self.literal(&m.literal, LineKind::Code),
-            NodeValue::HtmlBlock(h) => self.literal(&h.literal, LineKind::Text),
+            NodeValue::HtmlBlock(h) => {
+                let text = without_tags(&h.literal);
+                let text: Vec<&str> = text.lines().filter(|l| !l.trim().is_empty()).collect();
+                self.literal(&text.join("\n"), LineKind::Text);
+            }
             NodeValue::ThematicBreak(_) => {
                 self.open(LineKind::Rule);
                 self.close();
@@ -345,10 +366,14 @@ impl Writer {
             _ => self.push(fallback, bold, None),
         }
         self.close();
-        for child in node.children() {
-            if shown(child) && !matches!(child.data().value, NodeValue::CalloutTitle) {
-                self.block(child, 1);
+        let body = node
+            .children()
+            .filter(|c| shown(c) && !matches!(c.data().value, NodeValue::CalloutTitle));
+        for (i, child) in body.enumerate() {
+            if i > 0 {
+                self.gap();
             }
+            self.block(child, 1);
         }
         self.close();
         self.prefix.pop();
@@ -356,6 +381,9 @@ impl Writer {
 
     /// Text kept line by line, such as a code block.
     fn literal(&mut self, text: &str, kind: LineKind) {
+        if text.is_empty() {
+            return;
+        }
         let mark = Mark {
             code: kind == LineKind::Code,
             ..Mark::default()
@@ -375,9 +403,16 @@ impl Writer {
                 NodeValue::Text(t) => self.push(&t, mark, link),
                 NodeValue::Code(c) => self.push(&c.literal, Mark { code: true, ..mark }, link),
                 NodeValue::Math(m) => self.push(&m.literal, Mark { code: true, ..mark }, link),
-                NodeValue::HtmlInline(h) | NodeValue::Raw(h) => self.push(&h, mark, link),
+                // A tag: hidden, as the web view hides it.
+                NodeValue::HtmlInline(_) => {}
+                NodeValue::Raw(h) => self.push(&h, mark, link),
                 NodeValue::EscapedTag(t) => self.push(t, mark, link),
-                NodeValue::SoftBreak | NodeValue::LineBreak => self.open(LineKind::Text),
+                // The next line keeps this one's kind: a heading's second
+                // line is still the heading.
+                NodeValue::SoftBreak | NodeValue::LineBreak => {
+                    let kind = self.line.as_ref().map_or(LineKind::Text, |l| l.kind);
+                    self.open(kind);
+                }
                 NodeValue::Strong(_) => self.inlines(child, Mark { bold: true, ..mark }, link),
                 NodeValue::Emph(_) => self.inlines(
                     child,
@@ -406,10 +441,15 @@ impl Writer {
                 NodeValue::Link(l) => {
                     self.inlines(child, mark, Some(&l.url));
                     // A terminal can't follow the link, so show where it goes,
-                    // unless the text already says (an autolink).
+                    // unless the text already says (an autolink, which for
+                    // `www.x.org` gets an `http://` in front).
                     let text = plain_text(child);
-                    let bare = l.url.strip_prefix("mailto:").unwrap_or(&l.url);
-                    if text != l.url && text != bare {
+                    let said = [l.url.as_str()].into_iter().chain(
+                        ["mailto:", "http://", "https://"]
+                            .iter()
+                            .filter_map(|scheme| l.url.strip_prefix(scheme)),
+                    );
+                    if !said.into_iter().any(|u| u == text) {
                         self.push(
                             &format!(" ({})", l.url),
                             Mark {
@@ -455,12 +495,27 @@ fn plain_text<'a>(node: &'a AstNode<'a>) -> String {
         .collect()
 }
 
-/// Blocks that draw nothing: front matter and block ids.
+/// `html` with its tags (`<...>`) taken out.
+fn without_tags(html: &str) -> String {
+    let mut out = String::new();
+    let mut rest = html;
+    while let Some(start) = rest.find('<') {
+        out.push_str(&rest[..start]);
+        match rest[start..].find('>') {
+            Some(end) => rest = &rest[start + end + 1..],
+            None => {
+                rest = &rest[start..];
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Blocks that draw nothing: block ids.
 fn shown<'a>(node: &'a AstNode<'a>) -> bool {
-    !matches!(
-        node.data().value,
-        NodeValue::FrontMatter(_) | NodeValue::BlockId(_)
-    )
+    !matches!(node.data().value, NodeValue::BlockId(_))
 }
 
 #[cfg(test)]
@@ -544,12 +599,37 @@ mod tests {
             show("> [!tip]\n> Press `?` for help."),
             ["│ *Tip*", "│ Press `?` for help."]
         );
+        assert_eq!(
+            show("> [!note]\n> one\n>\n> two"),
+            ["│ *Note*", "│ one", "│", "│ two"]
+        );
+        assert_eq!(
+            show("see www.example.com"),
+            ["see [www.example.com](http://www.example.com)"]
+        );
     }
 
     #[test]
-    fn front_matter_is_left_out_and_comments_are_text() {
+    fn wrapped_rows_keep_the_containers_prefixes() {
+        let indents: Vec<String> = lines("- item\n  > quoted")
+            .into_iter()
+            .map(|l| l.indent)
+            .collect();
+        assert_eq!(indents, ["  ", "  │ "]);
         assert_eq!(
-            show("---\ntitle: x\n---\n\nText %%kept%% shown ==marked=="),
+            show("Release\nnotes\n====="),
+            ["h1 *Release*", "h1 *notes*"]
+        );
+    }
+
+    #[test]
+    fn html_tags_are_hidden_and_comments_are_text() {
+        assert_eq!(
+            show("returns Vec<String> on success\n\n<div>\n<b>hi</b>\n</div>"),
+            ["returns Vec on success", "", "hi"]
+        );
+        assert_eq!(
+            show("Text %%kept%% shown ==marked=="),
             ["Text %%kept%% shown marked"]
         );
         assert_eq!(lines(""), []);

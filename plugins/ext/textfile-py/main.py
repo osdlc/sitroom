@@ -26,7 +26,9 @@ last: Optional[View] = None
 def view(text: str, name: str, markdown: bool, max_lines: int) -> View:
     """The tile for a file's text. All three versions of the widget follow these rules: drop a
     leading byte order mark, turn CRLF into LF, drop trailing blanks (spaces, tabs, line
-    breaks), and keep the first `max_lines` lines."""
+    breaks), and keep the first `max_lines` lines, then `…` on a line of its own. In markdown a
+    blank line comes before the `…`, so that it is not read as part of the last paragraph or
+    list item."""
     if text.startswith("\ufeff"):
         text = text[1:]
     text = text.replace("\r\n", "\n").rstrip(" \t\r\n")
@@ -38,7 +40,7 @@ def view(text: str, name: str, markdown: bool, max_lines: int) -> View:
         return {
             "status": "ok",
             "summary": f"{name} · first {max_lines} of {len(lines)} lines",
-            "root": {"type": "text", "text": "\n".join(lines[:max_lines]) + "\n…", "markdown": markdown},
+            "root": {"type": "text", "text": "\n".join(lines[:max_lines]) + ("\n\n…" if markdown else "\n…"), "markdown": markdown},
         }
     count = "1 line" if len(lines) == 1 else f"{len(lines)} lines"
     return {"status": "ok", "summary": f"{name} · {count}", "root": {"type": "text", "text": text, "markdown": markdown}}

@@ -20,10 +20,10 @@ use anyhow::{Context, Result, bail};
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use sitroom_contract::{CatalogEntry, Manifest, Size, Status, View, Widget};
+use sitroom_contract::{CatalogEntry, Manifest, Size, View};
 use sitroom_core::host::Module;
 
-use crate::common::{expand_home, manifest};
+use crate::common::{expand_home, manifest, text_view};
 
 /// Larger files are refused: this is for notes, not logs (use `log` for those).
 const MAX_BYTES: u64 = 1024 * 1024;
@@ -99,7 +99,7 @@ impl Module for TextFile {
         }
         let bytes = std::fs::read(&self.path)
             .with_context(|| format!("reading {}", self.path.display()))?;
-        let view = view(
+        let view = text_view(
             &String::from_utf8_lossy(&bytes),
             &self.name,
             self.markdown,
@@ -108,46 +108,6 @@ impl Module for TextFile {
         self.seen = Some(key);
         self.last = Some(view.clone());
         Ok(view)
-    }
-}
-
-/// The tile for a file's text. All three versions of the widget follow these
-/// rules: drop a leading byte order mark, turn CRLF into LF, drop trailing
-/// blanks (spaces, tabs, line breaks), and keep the first `max_lines` lines.
-pub fn view(text: &str, name: &str, markdown: bool, max_lines: usize) -> View {
-    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
-    let text = text.replace("\r\n", "\n");
-    let text = text.trim_end_matches([' ', '\t', '\r', '\n']);
-    if text.is_empty() {
-        return View {
-            status: Status::Ok,
-            summary: format!("{name} · empty"),
-            root: Widget::Text {
-                text: "(empty)".into(),
-                markdown: false,
-            },
-        };
-    }
-    let lines: Vec<&str> = text.split('\n').collect();
-    let (shown, summary) = if lines.len() > max_lines {
-        (
-            format!("{}\n…", lines[..max_lines].join("\n")),
-            format!("{name} · first {max_lines} of {} lines", lines.len()),
-        )
-    } else {
-        let count = match lines.len() {
-            1 => "1 line".to_string(),
-            n => format!("{n} lines"),
-        };
-        (text.to_string(), format!("{name} · {count}"))
-    };
-    View {
-        status: Status::Ok,
-        summary,
-        root: Widget::Text {
-            text: shown,
-            markdown,
-        },
     }
 }
 
@@ -179,7 +139,7 @@ pub fn catalog() -> CatalogEntry {
             "textfile",
             "Text file",
             Size::Tall,
-            view(DEMO, "notes.md", true, 200),
+            text_view(DEMO, "notes.md", true, 200),
         )
     }
 }
@@ -187,6 +147,7 @@ pub fn catalog() -> CatalogEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sitroom_contract::Widget;
 
     fn data(name: &str) -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR"))

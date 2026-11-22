@@ -18,7 +18,10 @@ released on their own; they record the stages the project was built in.
   wikilinks, callouts and `==highlights==`. Single line breaks are kept, as before. The web view
   renders it with `@osdlc/markdown-render`, loaded with the first markdown tile; the terminal
   view and the native app read it with comrak and show a link's URL after its text. A module
-  whose text has `#`, `-` or `1.` at the start of a line now gets a heading or a list.
+  whose text has `#`, `-` or `1.` at the start of a line now gets a heading or a list, and
+  HTML tags are hidden in every view (`Vec<String>` shows as `Vec`: put it in backticks). When
+  `textfile`, `http` or `file` cut a markdown text short, the `…` goes after a blank line, so it
+  isn't joined to the last list item.
 
 - **Linux packages and static builds.** The release adds static `-linux-musl` archives, which run
   on any Linux (Alpine and old glibc included), and `.deb`, `.rpm` and Alpine `.apk` packages
