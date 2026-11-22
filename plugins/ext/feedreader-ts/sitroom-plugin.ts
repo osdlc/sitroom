@@ -417,7 +417,7 @@ export type Widget =
 
 /** A paragraph of text. */
 export interface TextWidget {
-  /** Read markdown in `text`: `**bold**`, and code between backticks. */
+  /** Read `text` as markdown (CommonMark, GFM, Obsidian wikilinks and callouts), keeping line breaks. */
   markdown?: boolean;
   /** The text to show. */
   text: string;

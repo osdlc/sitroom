@@ -10,8 +10,7 @@ export type Size = "small" | "medium" | "large" | "wide" | "tall";
 export type Widget =
   | {
       /**
-       * Read `text` as markdown: CommonMark and GFM, with Obsidian's wikilinks,
-       * callouts and `==highlights==`. Single line breaks are kept.
+       * Read `text` as markdown (CommonMark, GFM, Obsidian wikilinks and callouts), keeping line breaks.
        */
       markdown?: boolean;
       /**

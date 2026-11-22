@@ -157,8 +157,7 @@ pub enum Widget {
     Text {
         /// The text to show.
         text: String,
-        /// Read `text` as markdown: CommonMark and GFM, with Obsidian's wikilinks,
-        /// callouts and `==highlights==`. Single line breaks are kept.
+        /// Read `text` as markdown (CommonMark, GFM, Obsidian wikilinks and callouts), keeping line breaks.
         #[serde(default)]
         markdown: bool,
     },
