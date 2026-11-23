@@ -97,8 +97,12 @@ pub struct Requirements {
 
 impl CatalogEntry {
     /// True when every word of `query` is in the name, ID, description or a
-    /// tag (case-insensitive), and the entry has `tag` if one is given.
-    pub fn matches(&self, query: &str, tag: Option<&str>) -> bool {
+    /// tag (case-insensitive), the entry has `tag` if one is given, and it is
+    /// in tier `stability` if one is given.
+    pub fn matches(&self, query: &str, tag: Option<&str>, stability: Option<Stability>) -> bool {
+        if stability.is_some_and(|s| s != self.stability) {
+            return false;
+        }
         if let Some(tag) = tag
             && !self.tags.iter().any(|t| t.eq_ignore_ascii_case(tag))
         {
@@ -142,26 +146,39 @@ pub struct CatalogResponse {
 }
 
 impl CatalogResponse {
-    /// Search `all` for `query` and `tag`, and list every tag.
-    pub fn new(all: &[CatalogEntry], query: &str, tag: Option<&str>, errors: Vec<String>) -> Self {
+    /// Search `all` for `query`, `tag` and `stability`, and list every tag.
+    pub fn new(
+        all: &[CatalogEntry],
+        query: &str,
+        tag: Option<&str>,
+        stability: Option<Stability>,
+        errors: Vec<String>,
+    ) -> Self {
         let mut tags: Vec<String> = all.iter().flat_map(|e| e.tags.iter().cloned()).collect();
         tags.sort();
         tags.dedup();
         Self {
-            entries: search(all, query, tag).into_iter().cloned().collect(),
+            entries: search(all, query, tag, stability)
+                .into_iter()
+                .cloned()
+                .collect(),
             tags,
             errors,
         }
     }
 }
 
-/// Entries matching `query` and `tag`, in the order given.
+/// Entries matching `query`, `tag` and `stability`, in the order given.
 pub fn search<'a>(
     entries: &'a [CatalogEntry],
     query: &str,
     tag: Option<&str>,
+    stability: Option<Stability>,
 ) -> Vec<&'a CatalogEntry> {
-    entries.iter().filter(|e| e.matches(query, tag)).collect()
+    entries
+        .iter()
+        .filter(|e| e.matches(query, tag, stability))
+        .collect()
 }
 
 /// A plugin package: a folder holding this file (`sitroom-plugin.yaml`)
@@ -272,17 +289,36 @@ mod tests {
         ];
         let ids =
             |found: Vec<&CatalogEntry>| found.iter().map(|e| e.id.clone()).collect::<Vec<_>>();
-        assert_eq!(ids(search(&all, "", None)).len(), 3);
-        assert_eq!(ids(search(&all, "PULL", None)), ["github-prs"]);
-        assert_eq!(ids(search(&all, "core", None)), ["cpu"]);
-        assert_eq!(ids(search(&all, "github", None)), ["github-prs"]);
+        assert_eq!(ids(search(&all, "", None, None)).len(), 3);
+        assert_eq!(ids(search(&all, "PULL", None, None)), ["github-prs"]);
+        assert_eq!(ids(search(&all, "core", None, None)), ["cpu"]);
+        assert_eq!(ids(search(&all, "github", None, None)), ["github-prs"]);
         // Every word must match, anywhere.
-        assert_eq!(ids(search(&all, "issues jql", None)), ["jira"]);
-        assert!(search(&all, "issues docker", None).is_empty());
+        assert_eq!(ids(search(&all, "issues jql", None, None)), ["jira"]);
+        assert!(search(&all, "issues docker", None, None).is_empty());
         // Tags filter exactly, ignoring case.
-        assert_eq!(ids(search(&all, "", Some("Dev"))), ["github-prs", "jira"]);
-        assert_eq!(ids(search(&all, "jira", Some("dev"))), ["jira"]);
-        assert!(search(&all, "", Some("de")).is_empty());
+        assert_eq!(
+            ids(search(&all, "", Some("Dev"), None)),
+            ["github-prs", "jira"]
+        );
+        assert_eq!(ids(search(&all, "jira", Some("dev"), None)), ["jira"]);
+        assert!(search(&all, "", Some("de"), None).is_empty());
+    }
+
+    #[test]
+    fn search_filters_by_stability_tier() {
+        let mut stable = entry("cpu", "CPU", "Usage per core", &["system"]);
+        stable.stability = Stability::Published;
+        let all = vec![stable, entry("jira", "Jira", "Issues", &["dev"])];
+        let ids = |s| {
+            search(&all, "", None, Some(s))
+                .iter()
+                .map(|e| e.id.clone())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(ids(Stability::Published), ["cpu"]);
+        assert_eq!(ids(Stability::Experimental), ["jira"]);
+        assert!(ids(Stability::Internal).is_empty());
     }
 
     #[test]
@@ -307,7 +343,7 @@ mod tests {
             entry("cpu", "CPU", "Usage per core", &["system"]),
             entry("jira", "Jira", "Issues", &["issues", "dev"]),
         ];
-        let r = CatalogResponse::new(&all, "", Some("dev"), vec![]);
+        let r = CatalogResponse::new(&all, "", Some("dev"), None, vec![]);
         assert_eq!(r.tags, ["dev", "issues", "system"]);
         assert_eq!(r.entries.len(), 1);
         assert_eq!(r.entries[0].id, "jira");

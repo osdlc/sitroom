@@ -225,11 +225,13 @@ sitroom widgets --tag dev
 sitroom widgets jira --json     # {"schemaVersion", "kind": "widgets", "entries": [...]}: full entries, with config schema and demo view
 ```
 
-Search ignores case. `--tag` keeps entries with exactly that tag. Built-in modules are added
+Search ignores case. `--tag` keeps entries with exactly that tag, and `--stability published`
+(or `experimental`, `internal`) only entries in that tier. Built-in modules are added
 under `modules:` by their ID (or with `builtin: <id>` for a second copy); packages with
 `package: <id>`.
 
-The web editor's "Add component" list shows the same catalog (`GET /api/catalog?q=&tag=`) and
+The web editor's "Add component" list shows the same catalog
+(`GET /api/catalog?q=&tag=&stability=`), with filters for tag and stability tier, and
 writes these entries for you.
 
 Marketplace packages that are listed but not installed come from a cached index,
