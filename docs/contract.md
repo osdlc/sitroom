@@ -523,9 +523,11 @@ live data. Modules built only from API docs, with no live test yet, carry the ta
 `untested-live` and say so in their description.
 
 Search (`catalog::search`) keeps an entry when every word of the query appears in its ID, name,
-description or tags, ignoring case, and when it has the `--tag` given, if any.
+description or tags, ignoring case, when it has the `--tag` given, if any, and when it is in
+the `--stability` tier given, if any.
 
-The web view gets the catalog from `GET /api/catalog?q=<words>&tag=<tag>` (with the session
+The web view gets the catalog from `GET /api/catalog?q=<words>&tag=<tag>&stability=<tier>`
+(each optional; an unknown tier is a 400) (with the session
 token), as a `CatalogResponse`: the matching `entries`, every `tags` value in the whole catalog,
 and `errors` from reading packages or the index. Adding one sends `add_module` over the
 WebSocket:

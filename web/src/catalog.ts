@@ -8,9 +8,16 @@ export const TIERS: Record<Stability, string> = {
   internal: 'Internal: no promise; only sitroom itself uses it.',
 }
 
-/** `GET /api/catalog`: entries matching `q` and `tag`, and every tag. */
-export async function fetchCatalog(q: string, tag: string, signal?: AbortSignal): Promise<CatalogResponse> {
+/** `GET /api/catalog`: entries matching `q`, `tag` and `stability` (each
+ *  ignored when empty), and every tag. */
+export async function fetchCatalog(
+  q: string,
+  tag: string,
+  stability: Stability | '',
+  signal?: AbortSignal,
+): Promise<CatalogResponse> {
   const params = new URLSearchParams({ q, tag })
+  if (stability) params.set('stability', stability)
   const res = await fetch(`/api/catalog?${params}`, { headers: apiHeaders(), signal: signal ?? null })
   if (!res.ok) throw new Error(`catalog: HTTP ${res.status}`)
   return (await res.json()) as CatalogResponse

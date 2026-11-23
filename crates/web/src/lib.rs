@@ -31,7 +31,7 @@ use futures_util::{SinkExt, StreamExt};
 use rust_embed::RustEmbed;
 use serde::{Deserialize, Serialize};
 use sitroom_contract::{
-    CatalogEntry, CatalogResponse, ClientMessage, ServerMessage, UiSettings, Widget,
+    CatalogEntry, CatalogResponse, ClientMessage, ServerMessage, Stability, UiSettings, Widget,
 };
 use sitroom_core::cli_kit::boot::{self, Redeem, SignIn};
 use sitroom_core::host::Host;
@@ -369,9 +369,11 @@ struct CatalogQuery {
     #[serde(default)]
     q: String,
     tag: Option<String>,
+    stability: Option<Stability>,
 }
 
-/// `GET /api/catalog?q=words&tag=t`: entries matching both, and every tag.
+/// `GET /api/catalog?q=words&tag=t&stability=published`: entries matching
+/// all three (each optional), and every tag.
 async fn catalog(State(state): State<AppState>, Query(q): Query<CatalogQuery>) -> Response {
     let Some(source) = state.catalog.clone() else {
         return Json(CatalogResponse::default()).into_response();
@@ -380,7 +382,7 @@ async fn catalog(State(state): State<AppState>, Query(q): Query<CatalogQuery>) -
     match tokio::task::spawn_blocking(move || source()).await {
         Ok((all, errors)) => {
             let tag = q.tag.as_deref().filter(|t| !t.is_empty());
-            Json(CatalogResponse::new(&all, &q.q, tag, errors)).into_response()
+            Json(CatalogResponse::new(&all, &q.q, tag, q.stability, errors)).into_response()
         }
         Err(err) => (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response(),
     }
@@ -678,6 +680,42 @@ mod tests {
             (StatusCode::OK, "demo bytes".to_string())
         );
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// `stability=` narrows the catalog to one tier; an unknown tier is refused.
+    #[tokio::test]
+    async fn catalog_filters_by_stability() {
+        let entry = |id: &str, tier: &str| -> CatalogEntry {
+            serde_json::from_value(serde_json::json!({
+                "id": id, "name": id, "version": "1", "description": "",
+                "kind": "builtin", "stability": tier, "source": "builtin",
+                "default_size": "medium",
+                "demo": { "status": "ok", "summary": "",
+                          "root": { "type": "text", "text": "" } }
+            }))
+            .unwrap()
+        };
+        let all = vec![entry("cpu", "published"), entry("jira", "experimental")];
+        let mut state = state();
+        state.catalog = Some(Arc::new(move || (all.clone(), vec![])));
+        let get = |query: &str| {
+            Request::get(format!("/api/catalog?{query}"))
+                .header(header::HOST, "127.0.0.1:1")
+                .header(header::AUTHORIZATION, "Bearer session")
+                .body(Body::empty())
+                .unwrap()
+        };
+        let ids = |body: &str| -> Vec<String> {
+            let r: CatalogResponse = serde_json::from_str(body).unwrap();
+            r.entries.into_iter().map(|e| e.id).collect()
+        };
+        let (status, body) = call(&state, get("q=&stability=published")).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(ids(&body), ["cpu"]);
+        let (_, body) = call(&state, get("q=")).await;
+        assert_eq!(ids(&body), ["cpu", "jira"]);
+        let (status, _) = call(&state, get("stability=stable")).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
     }
 
     fn urlencode(s: &str) -> String {

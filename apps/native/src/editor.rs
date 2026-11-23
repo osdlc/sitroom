@@ -891,7 +891,7 @@ impl Dashboard {
             .collect();
         let response = editor.catalog.as_ref().map(|(all, problems)| {
             let tag = (!editor.tag.is_empty()).then_some(editor.tag.as_str());
-            CatalogResponse::new(all, &query, tag, problems.clone())
+            CatalogResponse::new(all, &query, tag, None, problems.clone())
         });
         let border = ui.p.get("accent");
         let item = |id: SharedString, title: String, sub: String, faded: bool| {
