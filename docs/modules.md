@@ -1,5 +1,9 @@
 # Built-in modules
 
+> **Stability:** each built-in module and its `config:` is **experimental**: it can change or be
+> removed in any release before 1.0, with a CHANGELOG entry. The `Module` trait, the renderer feed
+> and the Rust crates are **internal**. See the [stability tiers](roadmap.md#stability-tiers).
+
 Built-in modules are Rust modules compiled into the `sitroom` binary. They run in the
 sitroom's own process, with no plugin to start. (Modules in other languages are plugins; see
 [plugins.md](plugins.md).)

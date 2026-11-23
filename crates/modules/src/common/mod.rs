@@ -38,6 +38,7 @@ pub fn entry(id: &str, name: &str, default_size: Size, demo: View) -> CatalogEnt
         description: String::new(),
         tags: vec![],
         kind: EntryKind::Builtin,
+        stability: sitroom_contract::Stability::Experimental,
         source: "builtin".into(),
         default_size,
         config_schema: None,

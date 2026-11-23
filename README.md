@@ -4,6 +4,10 @@ Modular developer dashboard with a terminal UI and a web UI. The site,
 <https://osdlc.github.io/sitroom/>, has a tour and the tutorial. See [docs/](docs/) for the design and
 [docs/roadmap.md](docs/roadmap.md) for where it is going and what is experimental.
 
+> **Stability: experimental.** Before 1.0 everything here (the config file, the CLI, the plugin
+> protocol and the widgets) can change in any release, with a CHANGELOG entry. See the [stability
+> tiers](docs/roadmap.md#stability-tiers).
+
 ## Install
 
 ```sh

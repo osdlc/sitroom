@@ -1,5 +1,9 @@
 # Module Contract (v0.1)
 
+> **Stability: experimental.** The `View` JSON, the widget types and the stdio protocol with its
+> error codes can change or be removed in any release before 1.0, with a CHANGELOG entry. See the
+> [stability tiers](roadmap.md#stability-tiers).
+
 This is the contract between the host and a module. Built-in Rust modules implement it as a trait. Stdio plugins implement it over JSON-RPC 2.0. Both produce the same `View` JSON, which is also what the host sends to the TUI and web renderers.
 
 **Writing a plugin:** [plugins.md](plugins.md),
@@ -498,6 +502,7 @@ pub struct CatalogEntry {
     pub description: String,
     pub tags: Vec<String>,
     pub kind: EntryKind,         // builtin | plugin
+    pub stability: Stability,    // published | experimental (the default) | internal; see the roadmap
     pub source: String,          // "builtin", "bundled", the package's folder, or "marketplace"
     pub default_size: Size,
     pub config_schema: Option<serde_json::Value>,  // JSON Schema for the config: block

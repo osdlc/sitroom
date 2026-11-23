@@ -1,5 +1,9 @@
 # Dashboards and config layers
 
+> **Stability: experimental.** The config file format, dashboards, project files and the `SITROOM_*`
+> variables can change or be removed in any release before 1.0, with a CHANGELOG entry. See the
+> [stability tiers](roadmap.md#stability-tiers).
+
 A **dashboard** is a named set of screens and module settings, kept as its own file. A
 **project file** adds a repository's own modules and screens when you run sitroom inside
 that repository. Both are laid over your normal config file.

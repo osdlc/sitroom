@@ -27,6 +27,10 @@ pub struct CatalogEntry {
     pub tags: Vec<String>,
     /// Built in or plugin.
     pub kind: EntryKind,
+    /// What it promises: the stability tiers in docs/roadmap.md. Everything
+    /// is experimental before 1.0.
+    #[serde(default)]
+    pub stability: Stability,
     /// Where it comes from: `builtin`, `bundled` (a plugin inside the
     /// sitroom binary), or the folder of an installed package.
     pub source: String,
@@ -50,6 +54,31 @@ pub enum EntryKind {
     Builtin,
     /// A separate program run over stdio.
     Plugin,
+}
+
+/// A surface's stability tier (docs/roadmap.md, "Stability tiers").
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Stability {
+    /// Changes only in backward-compatible ways within a major version;
+    /// deprecated for at least one minor release before it is removed.
+    Published,
+    /// Can change or be removed in any release, with a CHANGELOG entry.
+    #[default]
+    Experimental,
+    /// No promise: only this repository uses it.
+    Internal,
+}
+
+impl Stability {
+    /// The tier's name, as in the docs: "published", "experimental", "internal".
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Stability::Published => "published",
+            Stability::Experimental => "experimental",
+            Stability::Internal => "internal",
+        }
+    }
 }
 
 /// What a module needs to work. Shown before adding or installing it.
@@ -186,6 +215,7 @@ impl Package {
             description: self.description.clone(),
             tags: self.tags.clone(),
             kind: EntryKind::Plugin,
+            stability: Stability::Experimental,
             source: dir.into(),
             default_size: self.size.unwrap_or(Size::Medium),
             config_schema: self.config_schema.clone(),
@@ -212,6 +242,7 @@ mod tests {
             description: description.into(),
             tags: tags.iter().map(|t| t.to_string()).collect(),
             kind: EntryKind::Builtin,
+            stability: Stability::Experimental,
             source: "builtin".into(),
             default_size: Size::Medium,
             config_schema: None,
@@ -264,6 +295,7 @@ mod tests {
         .unwrap();
         let e = p.entry("/plugins/ci");
         assert_eq!(e.kind, EntryKind::Plugin);
+        assert_eq!(e.stability, Stability::Experimental);
         assert_eq!(e.default_size, Size::Medium);
         assert_eq!(e.requirements.binaries, ["node>=22", "gh"]);
         assert_eq!(e.source, "/plugins/ci");

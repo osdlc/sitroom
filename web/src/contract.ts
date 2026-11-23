@@ -377,6 +377,10 @@ export type LogLevel = "error" | "warn" | "info" | "debug";
  */
 export type EntryKind = "builtin" | "plugin";
 /**
+ * A surface's stability tier (docs/roadmap.md, "Stability tiers").
+ */
+export type Stability = "published" | "experimental" | "internal";
+/**
  * Actions from a renderer: the web view sends these over its WebSocket, the
  * TUI over a channel. The host carries them out.
  */
@@ -562,6 +566,11 @@ export interface CatalogEntry {
    * sitroom binary), or the folder of an installed package.
    */
   source: string;
+  /**
+   * What it promises: the stability tiers in docs/roadmap.md. Everything
+   * is experimental before 1.0.
+   */
+  stability?: Stability & string;
   /**
    * Words to search and filter by, e.g. `github`.
    */

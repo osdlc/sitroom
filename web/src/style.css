@@ -405,6 +405,7 @@ main.grid { animation: screen-in 0.25s ease-out; }
 .add-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .add-head h2 { margin: 0; font-size: 1.1rem; }
 .add-head p { margin: 2px 0 0; }
+.add-head .tier { cursor: help; text-decoration: underline dotted; }
 .add-desc { margin: 0; }
 .add-tags { margin: 0; display: flex; gap: 4px; flex-wrap: wrap; }
 .add-cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: start; }

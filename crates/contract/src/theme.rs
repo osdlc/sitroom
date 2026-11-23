@@ -1,5 +1,8 @@
 //! Color themes: one set of named color tokens, used by every renderer.
 //!
+//! Stability: experimental. The token names can change in any release before
+//! 1.0, with a CHANGELOG entry (docs/roadmap.md, "Stability tiers").
+//!
 //! A color theme has a light and a dark variant; `Theme` (auto, light, dark)
 //! picks which one shows. Widgets never carry raw colors: they name a token
 //! with [`Tone`], and each renderer looks it up in the theme in use.

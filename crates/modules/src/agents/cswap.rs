@@ -130,6 +130,7 @@ pub fn catalog() -> CatalogEntry {
             .map(String::from)
             .to_vec(),
         kind: EntryKind::Plugin,
+        stability: sitroom_contract::Stability::Experimental,
         source: "bundled".into(),
         default_size: m.layout.size,
         config_schema: None,

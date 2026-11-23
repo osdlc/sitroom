@@ -1107,7 +1107,12 @@ impl Dashboard {
                     .child(ui.heading(entry.name.clone(), 1.1))
                     .child(ui.muted(
                         0.85,
-                        format!("{} · {source} · v{}", entry.id, entry.version),
+                        format!(
+                            "{} · {source} · v{} · {}",
+                            entry.id,
+                            entry.version,
+                            entry.stability.as_str()
+                        ),
                     )),
             )
             .child(close(ui, cx, "dialog-x", "✕"));

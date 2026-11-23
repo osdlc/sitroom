@@ -6,6 +6,12 @@ released on their own; they record the stages the project was built in.
 
 ## Unreleased
 
+- **Stability tiers shown.** Each doc for something you can depend on (the contract, plugins,
+  the CLI, config and dashboards, the marketplace, the desktop app, the SDKs) opens with its tier
+  from the [roadmap](docs/roadmap.md#stability-tiers); before 1.0 that is experimental.
+  Catalog entries have a `stability` field (`published`, `experimental` or `internal`;
+  `experimental` when left out), shown by `sitroom widgets` (a new column), the web view's add
+  dialog and the native app's.
 - **A first screen that says what to do.** The built-in demo (no config file yet, and the
   starter template for a new dashboard) opens on "start here": the keys, the terminal and
   browser views, and how to make your own. The second screen, "system", shows this machine:

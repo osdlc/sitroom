@@ -85,6 +85,7 @@ impl Demo {
             description: String::new(),
             tags: vec![],
             kind: sitroom_contract::EntryKind::Plugin,
+            stability: sitroom_contract::Stability::Experimental,
             source: String::new(),
             default_size: sitroom_contract::Size::Small,
             config_schema: None,
