@@ -5,7 +5,9 @@
 // (crates/core/src/markdown.rs). As there, a single line break is kept (the
 // `white-space` rule in style.css), and `%% comments %%` are left as text:
 // a text widget is a module's output, not a vault note, and doubled percent
-// signs in it are not comments. Links open in a new tab.
+// signs in it are not comments. HTML tags are dropped by the renderer's
+// sanitizer, and the comrak side hides them to match. Links open in a new
+// tab, through runAction.
 //
 // The renderer works asynchronously, so the text takes its room after the
 // tile has been fitted. Each finished render sends a bubbling `tile-refit`

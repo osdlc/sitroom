@@ -66,7 +66,7 @@ pub struct Mark {
 }
 
 impl Mark {
-    /// Decoration only: list markers, quote bars.
+    /// Only `muted`: how list markers and quote bars are drawn.
     pub const MUTED: Mark = Mark {
         bold: false,
         italic: false,

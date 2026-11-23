@@ -241,8 +241,9 @@ mod tests {
     }
 }
 
-/// The tile for a text. All three versions of the textfile widget follow
-/// these rules: drop a leading byte order mark, turn CRLF into LF, drop
+/// The tile for a text, as `textfile`, `http`, `file` and `note` show it.
+/// All three versions of the textfile widget (this one and the TypeScript
+/// and Python plugins) follow these rules: drop a leading byte order mark, turn CRLF into LF, drop
 /// trailing blanks (spaces, tabs, line breaks), and keep the first
 /// `max_lines` lines, then `…` on a line of its own. In markdown a blank line
 /// comes before the `…`, so that it is not read as part of the last
