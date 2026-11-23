@@ -1,0 +1,55 @@
+# Checks the planning entities in docs/planning/ (milestones, decisions,
+# notes) against the osdlc sdlc entity format: front matter, ids, states, the
+# H1 matching the title, and the template's sections. The checker is the sdlc
+# CLI bundled in osdlc/osdlc's Claude plugin pack, at a pinned commit; it needs
+# Node 24 and nothing else.
+name: planning
+
+on:
+  pull_request:
+    paths: ['docs/planning/**', '.github/workflows/planning.yml']
+  push:
+    branches: [main]
+    paths: ['docs/planning/**', '.github/workflows/planning.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: planning-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # osdlc/osdlc main, 2026-11-22. Move it forward to take format changes.
+  OSDLC_REF: 163aa7caa00b88e42282b929ec8733ad22632148
+
+jobs:
+  entities:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Fetch the sdlc CLI
+        run: |
+          git init -q "$RUNNER_TEMP/osdlc"
+          cd "$RUNNER_TEMP/osdlc"
+          git remote add origin https://github.com/osdlc/osdlc
+          git sparse-checkout set .claude-plugin/packs/sdlc
+          git fetch -q --depth 1 --filter=blob:none origin "$OSDLC_REF"
+          git checkout -q FETCH_HEAD
+          echo "SDLC=$RUNNER_TEMP/osdlc/.claude-plugin/packs/sdlc/cli/sdlc.js" >> "$GITHUB_ENV"
+
+      # Closed entities too, and missing template sections fail the run.
+      - name: Audit
+        run: node "$SDLC" entities audit --strict --include-closed
+
+      - name: Validate front matter
+        run: node "$SDLC" entities validate docs/planning/*/*.md
+
+      - name: Check ids
+        run: node "$SDLC" entities check-identifiers

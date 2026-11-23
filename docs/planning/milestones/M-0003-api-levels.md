@@ -1,20 +1,33 @@
 ---
 type: milestone
+schema_version: '2'
 id: M-0003
-title: API levels written down
 state: open/draft
+title: API levels written down
 created: 2026-11-14
-version: 0.11.0
-tags: [api, docs]
+related:
+- '[[M-0002-core-and-plugins]]'
+tags:
+- api
+- docs
 description: One place that says what each API level is and what it promises.
+version: 0.11.0
 ---
 
-# API levels written down (0.11)
+# API levels written down
+
+## Goal
 
 One place that says what each API level is and what it promises. Issue #18. The levels are listed
-in the [roadmap](../../docs/roadmap.md#api-levels).
+in the [roadmap](../../roadmap.md#api-levels).
 
-## Work
+## Success criteria
+
+- `docs/api-levels.md` covers every level, and the contract and plugin docs link to it.
+- The example widget renders the same view at every level, checked by a test.
+- `plugin-check` names the level of each plugin in `plugins/ext`.
+
+## Deliverables
 
 - `docs/api-levels.md`: for each level, what the host guarantees (process lifecycle, timeouts,
   history, error codes), what the plugin must do, what it costs (quoted from the
@@ -23,14 +36,8 @@ in the [roadmap](../../docs/roadmap.md#api-levels).
   (#17).
 - `sitroom plugin-check` reports which level a plugin uses.
 - The lists of what is not built yet point here instead, so there is one list: "Not in v0.1"
-  in [contract.md](../../docs/contract.md), and "Not yet" in [plugins.md](../../docs/plugins.md)
-  and [marketplace.md](../../docs/marketplace.md).
-
-## Done when
-
-- `docs/api-levels.md` covers every level, and the contract and plugin docs link to it.
-- The example widget renders the same view at every level, checked by a test.
-- `plugin-check` names the level of each plugin in `plugins/ext`.
+  in [contract.md](../../contract.md), and "Not yet" in [plugins.md](../../plugins.md)
+  and [marketplace.md](../../marketplace.md).
 
 ## Depends on
 

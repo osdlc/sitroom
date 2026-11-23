@@ -2,8 +2,12 @@
 
 Where sitroom is going, in milestones, and what a user or plugin author can count on at each
 step. Pre-1.0, so the milestones and their order can change. Each milestone is a file in
-[sdlc/milestones/](../sdlc/milestones/). GitHub milestones of the same names, to attach issues
+[planning/milestones/](planning/milestones/). GitHub milestones of the same names, to attach issues
 and pull requests to, are not created yet.
+
+The planning files under [planning/](planning/) (milestones, decisions such as
+[D-0001](planning/decisions/D-0001-native-renderer.md), and notes such as the experiments) are
+entities in the osdlc sdlc format, checked in CI with `sdlc entities audit`.
 
 ## Stability tiers
 
@@ -17,7 +21,7 @@ tiers.
 | **Internal** | No promise. Only this repository uses it. |
 
 **Everything starts experimental.** The API is still being refined, so nothing is published
-until 1.0 ([M-0008](../sdlc/milestones/M-0008-first-published-release.md)). Moving a part to
+until 1.0 ([M-0008](planning/milestones/M-0008-first-published-release.md)). Moving a part to
 published is a decision recorded in this file and the CHANGELOG.
 
 ## API levels
@@ -29,7 +33,7 @@ the one before it, and the same `View` JSON is used at every level.
 |---|---|---|
 | **1. Declarative** | A `View` as JSON (the widget tree in [contract.md](contract.md)), or any JSON with values picked out of it | A file (`file` built-in) or a URL (`http` built-in). No plugin process runs; at most a `token_command` runs to fetch a token. |
 | **2. Applet** | A program that speaks JSON-RPC 2.0, one message per line, over stdin and stdout: `initialize`, `view/render`, `log` | The host starts it, polls it and stops it ([plugins.md](plugins.md)). The TypeScript and Python SDKs are helpers over this level, not a level of their own. |
-| **3. Interactive** | An applet that also sends views when it wants (`view/update`), gets events back (a picked item, an action), and declares commands the user approves. Not built yet ([M-0004](../sdlc/milestones/M-0004-interactive.md)). | Same process as level 2, with more methods |
+| **3. Interactive** | An applet that also sends views when it wants (`view/update`), gets events back (a picked item, an action), and declares commands the user approves. Not built yet ([M-0004](planning/milestones/M-0004-interactive.md)). | Same process as level 2, with more methods |
 | Built-in module | A Rust `Module` in a bundle ([modules.md](modules.md)) | Compiled in |
 
 Each level's tier is in the [surfaces table](#surfaces-and-their-tiers). Sandboxed WASM plugins
@@ -55,18 +59,19 @@ are not a level yet: see [experiments](#experiments).
 
 ## Milestones
 
-The milestones are the files in [sdlc/milestones/](../sdlc/milestones/). Each one holds its
-version, its work, what "done" means and its open questions, and this file does not repeat them.
+The milestones are the files in [planning/milestones/](planning/milestones/). Each one holds its
+version, its goal, its deliverables, what "done" means (its success criteria) and its open
+questions, and this file does not repeat them.
 Their ids run in release order:
 
-1. [Foundation](../sdlc/milestones/M-0001-foundation.md)
-2. [Core and plugins](../sdlc/milestones/M-0002-core-and-plugins.md)
-3. [API levels written down](../sdlc/milestones/M-0003-api-levels.md)
-4. [Interactive level and actions](../sdlc/milestones/M-0004-interactive.md)
-5. [Alerts and history](../sdlc/milestones/M-0005-alerts-and-history.md)
-6. [Network](../sdlc/milestones/M-0006-network.md)
-7. [Refine](../sdlc/milestones/M-0007-refine.md)
-8. [First published release](../sdlc/milestones/M-0008-first-published-release.md)
+1. [Foundation](planning/milestones/M-0001-foundation.md)
+2. [Core and plugins](planning/milestones/M-0002-core-and-plugins.md)
+3. [API levels written down](planning/milestones/M-0003-api-levels.md)
+4. [Interactive level and actions](planning/milestones/M-0004-interactive.md)
+5. [Alerts and history](planning/milestones/M-0005-alerts-and-history.md)
+6. [Network](planning/milestones/M-0006-network.md)
+7. [Refine](planning/milestones/M-0007-refine.md)
+8. [First published release](planning/milestones/M-0008-first-published-release.md)
 
 ## Experiments
 
@@ -77,8 +82,11 @@ doesn't gets a short write-up of why. An experiment that changes the contract, s
 widget type, cannot be turned off by the config, so it stays on its branch or in a draft pull
 request until a milestone takes it on.
 
+An experiment with a write-up is a note in [planning/notes/](planning/notes/) tagged
+`experiment`.
+
 | Experiment | What it tries | Notes |
 |---|---|---|
-| Network mode | Dashboards on a network find each other and show each other's shared screens, behind a password, encrypted | [experiments/network-mode.md](experiments/network-mode.md); built in [M-0006](../sdlc/milestones/M-0006-network.md) |
+| Network mode | Dashboards on a network find each other and show each other's shared screens, behind a password, encrypted | [N-0001](planning/notes/N-0001-network-mode.md); built in [M-0006](planning/milestones/M-0006-network.md) |
 | Image widget and screensaver module | An `image` widget and a module that shows pictures | On main since #6. It adds a widget type, so the config can't turn it off. |
 | Sandboxed WASM plugins | A fourth level for untrusted plugins | Waits on WASI networking and subprocesses ([modules.md](modules.md)); re-measure then |

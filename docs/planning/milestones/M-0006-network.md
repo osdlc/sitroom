@@ -1,20 +1,36 @@
 ---
 type: milestone
+schema_version: '2'
 id: M-0006
-title: Network
 state: open/draft
+title: Network
 created: 2026-11-14
-version: 0.14.0
-tags: [network, experimental]
+related:
+- '[[M-0002-core-and-plugins]]'
+- '[[M-0003-api-levels]]'
+- '[[M-0005-alerts-and-history]]'
+tags:
+- network
+- experimental
 description: Dashboards on a network find each other and use each other's screens and tiles.
+version: 0.14.0
 ---
 
-# Network (0.14)
+# Network
 
-Build the [network-mode experiment](../../docs/experiments/network-mode.md) as experimental. The
+## Goal
+
+Build the [network-mode experiment](../notes/N-0001-network-mode.md) as experimental. The
 experiment has the design, what is sent and what never is.
 
-## Work
+## Success criteria
+
+The experiment's "Done when", and:
+
+- A peer's tile is shown on a local screen in both views.
+- With network mode off, nothing listens on the network.
+
+## Deliverables
 
 - **Steps 1 to 3 of the experiment:** discovery, one shared screen, and the `remote` module that
   puts a peer's tile on a local screen.
@@ -26,20 +42,13 @@ experiment has the design, what is sent and what never is.
 - **Measured** with the [M-0002](M-0002-core-and-plugins.md) benchmark: binary size, idle CPU with
   network mode on and off, and the cost of each remote tile.
 
-## Done when
-
-The experiment's "Done when", and:
-
-- A peer's tile is shown on a local screen in both views.
-- With network mode off, nothing listens on the network.
-
 ## Depends on
 
 - [M-0002](M-0002-core-and-plugins.md): the benchmark it is measured with.
 - [M-0003](M-0003-api-levels.md): the `View` JSON and the levels are written down first.
 - [M-0005](M-0005-alerts-and-history.md): remote tiles raise alerts.
 
-## Open questions
+## Risks / open questions
 
 The experiment's questions, and:
 

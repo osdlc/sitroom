@@ -1,6 +1,24 @@
-# 0001: GPUI for the native app
+---
+type: decision
+schema_version: '2'
+id: D-0001
+state: open/accepted
+title: GPUI for the native app
+created: 2026-11-21
+related:
+- '[[roadmap]]'
+tags:
+- native
+- performance
+description: The native app stays on GPUI; the Slint and SwiftUI comparisons are removed.
+---
 
-Status: decided, November 2026.
+# GPUI for the native app
+
+## Summary
+
+The native app stays on GPUI, after Slint and SwiftUI versions were built and measured against
+it. Decided in November 2026.
 
 ## Decision
 
