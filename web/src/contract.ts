@@ -10,7 +10,7 @@ export type Size = "small" | "medium" | "large" | "wide" | "tall";
 export type Widget =
   | {
       /**
-       * Read markdown in `text`: `**bold**`, and code between backticks.
+       * Read `text` as markdown (CommonMark, GFM, Obsidian wikilinks and callouts), keeping line breaks.
        */
       markdown?: boolean;
       /**

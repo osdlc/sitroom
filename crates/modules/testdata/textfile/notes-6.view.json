@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "summary": "notes.md · first 6 of 11 lines",
+  "root": {
+    "type": "text",
+    "text": "# Release notes\n\nThings to finish **before Friday**:\n\n- [x] ship the config editor\n- [ ] write the plugin guide\n\n…",
+    "markdown": true
+  }
+}

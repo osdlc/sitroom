@@ -49,7 +49,8 @@ When you start it for someone, run `sitroom serve -d --no-open` and give them th
 `http://127.0.0.1:7878/?boot=…` link. The link signs in one tab, works once, and expires after
 a minute. If it expired, run `sitroom open --no-open` for a new one.
 
-With no config file sitroom shows a demo of eight screens. It is `examples/demo.yaml` in
+With no config file sitroom shows a demo of eight screens: "start here" (the keys and next
+steps), "system" (this machine), then every widget with made-up data. It is `examples/demo.yaml` in
 the repository (https://github.com/osdlc/sitroom/blob/main/examples/demo.yaml); copy it as a
 starting point.
 

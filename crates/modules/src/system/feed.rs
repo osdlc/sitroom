@@ -8,6 +8,8 @@ use serde::Deserialize;
 use serde_json::Value;
 use sitroom_contract::{Status, View, Widget};
 
+use crate::common::text_view;
+
 /// Larger bodies and files are refused.
 pub const MAX_BYTES: u64 = 1024 * 1024;
 
@@ -126,44 +128,6 @@ fn contract_view(json: Value, name: &str) -> Result<View> {
 
 fn pretty(json: &Value) -> String {
     serde_json::to_string_pretty(json).unwrap_or_default()
-}
-
-/// Text as the textfile module shows it: CRLF as LF, trailing blanks
-/// dropped, the first `max_lines` lines.
-fn text_view(text: &str, name: &str, markdown: bool, max_lines: usize) -> View {
-    let text = text.replace("\r\n", "\n");
-    let text = text.trim_end_matches([' ', '\t', '\r', '\n']);
-    if text.is_empty() {
-        return View {
-            status: Status::Ok,
-            summary: format!("{name} · empty"),
-            root: Widget::Text {
-                text: "(empty)".into(),
-                markdown: false,
-            },
-        };
-    }
-    let lines: Vec<&str> = text.split('\n').collect();
-    let (shown, summary) = if lines.len() > max_lines {
-        (
-            format!("{}\n…", lines[..max_lines].join("\n")),
-            format!("{name} · first {max_lines} of {} lines", lines.len()),
-        )
-    } else {
-        let count = match lines.len() {
-            1 => "1 line".to_string(),
-            n => format!("{n} lines"),
-        };
-        (text.to_string(), format!("{name} · {count}"))
-    };
-    View {
-        status: Status::Ok,
-        summary,
-        root: Widget::Text {
-            text: shown,
-            markdown,
-        },
-    }
 }
 
 /// One stat per field, side by side. A missing value shows "—" and makes

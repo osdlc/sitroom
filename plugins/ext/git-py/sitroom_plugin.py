@@ -399,7 +399,7 @@ class _TextWidgetRequired(TypedDict):
 
 # A paragraph of text.
 class TextWidget(_TextWidgetRequired, total=False):
-    # Read markdown in `text`: `**bold**`, and code between backticks.
+    # Read `text` as markdown (CommonMark, GFM, Obsidian wikilinks and callouts), keeping line breaks.
     markdown: bool
 
 

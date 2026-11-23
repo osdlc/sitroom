@@ -45,6 +45,7 @@ bundle-system = [
     "module-log",
     "module-uptime",
     "module-textfile",
+    "module-note",
     "module-battery",
     "module-cmdrunner",
     "module-security",
@@ -114,6 +115,7 @@ module-process = ["sitroom-modules/module-process"]
 module-log = ["sitroom-modules/module-log"]
 module-uptime = ["sitroom-modules/module-uptime"]
 module-textfile = ["sitroom-modules/module-textfile"]
+module-note = ["sitroom-modules/module-note"]
 module-battery = ["sitroom-modules/module-battery"]
 module-cmdrunner = ["sitroom-modules/module-cmdrunner"]
 module-security = ["sitroom-modules/module-security"]

@@ -7,7 +7,7 @@ use std::path::{Component, Path, PathBuf};
 use schemars::JsonSchema;
 use sitroom_contract::{
     CONTRACT_VERSION, CatalogEntry, EntryKind, LayoutHints, Manifest, Refresh, Requirements, Size,
-    View,
+    Status, View, Widget,
 };
 use sitroom_core::host::Module;
 
@@ -177,6 +177,54 @@ fn resolve_path(path: &mut String, dir: &Path) {
         }
     }
     *path = out.to_string_lossy().into_owned();
+}
+
+/// The tile for a text, as `textfile`, `http`, `file` and `note` show it.
+/// All three versions of the textfile widget (this one and the TypeScript
+/// and Python plugins) follow these rules: drop a leading byte order mark, turn CRLF into LF, drop
+/// trailing blanks (spaces, tabs, line breaks), and keep the first
+/// `max_lines` lines, then `…` on a line of its own. In markdown a blank line
+/// comes before the `…`, so that it is not read as part of the last
+/// paragraph or list item.
+pub fn text_view(text: &str, name: &str, markdown: bool, max_lines: usize) -> View {
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
+    let text = text.replace("\r\n", "\n");
+    let text = text.trim_end_matches([' ', '\t', '\r', '\n']);
+    if text.is_empty() {
+        return View {
+            status: Status::Ok,
+            summary: format!("{name} · empty"),
+            root: Widget::Text {
+                text: "(empty)".into(),
+                markdown: false,
+            },
+        };
+    }
+    let lines: Vec<&str> = text.split('\n').collect();
+    let (shown, summary) = if lines.len() > max_lines {
+        (
+            format!(
+                "{}{}…",
+                lines[..max_lines].join("\n"),
+                if markdown { "\n\n" } else { "\n" }
+            ),
+            format!("{name} · first {max_lines} of {} lines", lines.len()),
+        )
+    } else {
+        let count = match lines.len() {
+            1 => "1 line".to_string(),
+            n => format!("{n} lines"),
+        };
+        (text.to_string(), format!("{name} · {count}"))
+    };
+    View {
+        status: Status::Ok,
+        summary,
+        root: Widget::Text {
+            text: shown,
+            markdown,
+        },
+    }
 }
 
 #[cfg(test)]

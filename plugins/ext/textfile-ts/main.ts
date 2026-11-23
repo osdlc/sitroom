@@ -31,7 +31,8 @@ let last: View | null = null;
 /**
  * The tile for a file's text. All three versions of the widget follow these rules: drop a
  * leading byte order mark, turn CRLF into LF, drop trailing blanks (spaces, tabs, line breaks),
- * and keep the first `maxLines` lines.
+ * and keep the first `maxLines` lines, then `…` on a line of its own. In markdown a blank line
+ * comes before the `…`, so that it is not read as part of the last paragraph or list item.
  */
 function view(text: string, name: string, markdown: boolean, maxLines: number): View {
   if (text.startsWith("\ufeff")) text = text.slice(1);
@@ -44,7 +45,7 @@ function view(text: string, name: string, markdown: boolean, maxLines: number): 
     return {
       status: "ok",
       summary: `${name} · first ${maxLines} of ${lines.length} lines`,
-      root: { type: "text", text: `${lines.slice(0, maxLines).join("\n")}\n…`, markdown },
+      root: { type: "text", text: `${lines.slice(0, maxLines).join("\n")}${markdown ? "\n\n" : "\n"}…`, markdown },
     };
   }
   const count = lines.length === 1 ? "1 line" : `${lines.length} lines`;

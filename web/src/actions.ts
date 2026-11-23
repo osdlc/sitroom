@@ -11,8 +11,9 @@ export function webUrl(url: string | null | undefined): string | undefined {
 }
 
 /**
- * Carries out an item's action, from Enter (mouse clicks on links use the
- * link itself). New kinds of action are added here.
+ * Carries out an action: an item's, from Enter (a click on an item's link
+ * uses the link itself), or a click on a link in markdown text. New kinds of
+ * action are added here.
  */
 export function runAction(action: Action) {
   switch (action.type) {

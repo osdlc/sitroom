@@ -223,7 +223,22 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .w-list li[data-tone] { border-left: 3px solid var(--tone); padding-left: 8px; }
 /* Line breaks in the text are kept (a text file, a multi-line note). */
 .w-text { white-space: pre-wrap; }
-.w-text code { font-size: 0.85em; background: var(--track); border-radius: 3px; padding: 0 4px; }
+/* Markdown text (MarkdownText.vue): sitroom's colors and sizes, and single line
+   breaks kept, as the TUI keeps them. */
+.w-md {
+  --markdown-text-override: var(--text); --markdown-muted-override: var(--muted);
+  --markdown-link-override: var(--accent); --markdown-code-bg-override: var(--track);
+  --markdown-surface-override: transparent; --markdown-hr-override: var(--border);
+  --markdown-blockquote-border-override: var(--border); --markdown-table-border-override: var(--border);
+  --markdown-highlight-bg-override: color-mix(in srgb, var(--warn) 30%, transparent);
+}
+.w-md .markdown-render { line-height: 1.45; }
+.w-md :is(p, li, td, th) { white-space: pre-line; }
+.w-md :is(p, ul, ol, blockquote, pre, table) { margin: 0.4em 0; }
+.w-md :is(h1, h2, h3, h4, h5, h6) { font-size: 1em; margin: 0.7em 0 0.2em; color: var(--accent); }
+.w-md h1 { font-size: 1.15em; }
+.w-md .markdown-render > :first-child { margin-top: 0; }
+.w-md .markdown-render > :last-child { margin-bottom: 0; }
 .w-list .sub { color: var(--muted); font-size: 0.8rem; }
 /* One line each for the title (with its tags) and the subtitle; what doesn't fit ends with "…". */
 .w-list .item-head { display: flex; align-items: baseline; min-width: 0; }

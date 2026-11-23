@@ -1,8 +1,9 @@
 //! The system bundle: CPU, memory, GPU, network, disk and processes (one module per
 //! area, so each can be placed, sized and refreshed on its own), plus log
-//! tailing, uptime checks, a text file viewer, the battery, a command's output,
-//! the machine's security settings, and views read from a URL or a file. Each module sits behind a cargo
-//! feature named after its id.
+//! tailing, uptime checks, a text file viewer, fixed text (`note`), the
+//! battery, a command's output, the machine's security settings, and views
+//! read from a URL or a file. Each module sits behind a cargo feature named
+//! after its id.
 
 use std::time::Instant;
 
@@ -36,6 +37,8 @@ pub mod log;
 pub mod memory;
 #[cfg(feature = "module-network")]
 pub mod network;
+#[cfg(feature = "module-note")]
+pub mod note;
 #[cfg(feature = "module-process")]
 pub mod process;
 #[cfg(feature = "module-processes")]
@@ -120,6 +123,13 @@ pub const MODULES: &[Builtin] = &[
         core: false,
         new: || Box::new(textfile::TextFile::default()),
         catalog: textfile::catalog,
+    },
+    #[cfg(feature = "module-note")]
+    Builtin {
+        id: "note",
+        core: false,
+        new: || Box::new(note::Note::default()),
+        catalog: note::catalog,
     },
     #[cfg(feature = "module-battery")]
     Builtin {
