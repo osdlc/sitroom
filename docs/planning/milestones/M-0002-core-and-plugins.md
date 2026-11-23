@@ -1,22 +1,37 @@
 ---
 type: milestone
+schema_version: '2'
 id: M-0002
-title: Core and plugins
 state: open/draft
+title: Core and plugins
 created: 2026-11-14
-version: 0.10.0
-tags: [performance, modules, plugins]
+tags:
+- performance
+- modules
+- plugins
 description: Measure what each kind of plugin costs, and decide what is core and what is a plugin.
+version: 0.10.0
 ---
 
-# Core and plugins (0.10)
+# Core and plugins
+
+## Goal
 
 Decide what ships in the binary (core) and what is a plugin, from numbers anyone can reproduce.
 Issue #19.
 
-## Measure each kind of plugin
+## Success criteria
 
-The [benchmark](../../bench/README.md) leaves out some kinds of plugin, and it measures one widget
+- The policy is published, with every current built-in and its verdict.
+- Benchmark results for every kind are committed, and the docs quote them.
+- The CI job enforces the budgets.
+- The scale test has run once and its results are recorded.
+
+## Deliverables
+
+### Measure each kind of plugin
+
+The [benchmark](../../../bench/README.md) leaves out some kinds of plugin, and it measures one widget
 at a time. Add:
 
 - **The declarative kinds:** the `http` and `file` built-ins showing the same widgets from a URL
@@ -34,23 +49,16 @@ at a time. Add:
   module. Startup and render p95 with the default bundles, and host memory with a typical
   screen, are reported on each run but don't fail it: timings on shared runners are too noisy.
 
-## Decide core and plugins
+### Decide core and plugins
 
-- Turn the rule in [modules.md](../../docs/modules.md#built-in-or-plugin) into a policy with both
+- Turn the rule in [modules.md](../../modules.md#built-in-or-plugin) into a policy with both
   sides: what is built in, what is never built in, and how a built-in moves out to a plugin.
   Confirm or change the rule with the numbers above.
 - A verdict for each of the ~50 built-ins: stays built in, moves to a plugin, or goes. Modules
   marked "untested live" are tested against a real account or moved out.
 - A task for each module that moves. The moves can land in later milestones.
 
-## Done when
-
-- The policy is published, with every current built-in and its verdict.
-- Benchmark results for every kind are committed, and the docs quote them.
-- The CI job enforces the budgets.
-- The scale test has run once and its results are recorded.
-
-## Open questions
+## Risks / open questions
 
 - Is "core" one line or three: the default binary, optional bundles built in at build time
   (bundles exist today), and plugins?

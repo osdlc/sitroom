@@ -1,7 +1,23 @@
+---
+type: note
+schema_version: '1'
+id: N-0001
+state: open/draft
+title: 'Experiment: network mode'
+created: 2026-11-18
+related:
+- '[[M-0006-network]]'
+tags:
+- experiment
+- network
+description: Dashboards on a network find each other and show each other's shared screens.
+genre: proposal
+---
+
 # Experiment: network mode
 
-Status: idea. Nothing is built. See the [roadmap](../roadmap.md#experiments); planned as
-milestone [M-0006](../../sdlc/milestones/M-0006-network.md).
+An experiment (see the [roadmap](../../roadmap.md#experiments)). Status: idea, nothing is built.
+Planned as milestone [M-0006](../milestones/M-0006-network.md).
 
 ## Goal
 
@@ -66,7 +82,7 @@ A remote tile is tagged `remote` in both views, as a demo tile is tagged `demo`.
 - **Peers are keys:** a name is what a peer says about itself, so it is not unique and can be
   faked. The viewer stores the pinned fingerprint with the name, and `peer: home-server` means
   that key.
-- **What is sent:** the same tile messages the renderers get ([contract.md](../contract.md)),
+- **What is sent:** the same tile messages the renderers get ([contract.md](../../contract.md)),
   filtered to the shared tiles, and the shared screens' layout.
 - **What is never sent:** the config file or its path, module `config:` blocks, tokens, commands.
 - **What the viewer checks:** a peer is untrusted input. Every view it sends goes through the
@@ -83,7 +99,7 @@ A remote tile is tagged `remote` in both views, as a demo tile is tagged `demo`.
 2. One shared screen, encrypted and read-only, shown in the web view.
 3. The `remote` module, and the TUI.
 4. A write-up: what worked, what it costs (binary size, idle CPU), and what should change before
-   1.0 ([M-0007](../../sdlc/milestones/M-0007-refine.md)).
+   1.0 ([M-0007](../milestones/M-0007-refine.md)).
 
 ## Open questions
 

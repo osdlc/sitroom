@@ -1,23 +1,34 @@
 ---
 type: milestone
+schema_version: '2'
 id: M-0001
-title: Foundation
 state: open/planned
+title: Foundation
 created: 2026-11-14
-version: 0.9.0
-tags: [ci, stability]
+tags:
+- ci
+- stability
 description: Make changes safe to land, and mark what is experimental.
+version: 0.9.0
 ---
 
-# Foundation (0.9)
+# Foundation
+
+## Goal
 
 Make changes safe to land, and mark what is experimental, before the larger work starts.
 
-## Work
+## Success criteria
+
+- CI gates every pull request on Linux and macOS.
+- Every surface in the roadmap's table shows its tier where it is documented.
+- No pull request from #6 to #16 is open without a decision.
+
+## Deliverables
 
 - Rust CI: format, clippy and tests on Linux and macOS, each bundle on its own, the web build and
   the generated types, all on every pull request. Windows runs without gating. Done in #20.
-- The stability tiers ([roadmap](../../docs/roadmap.md#stability-tiers)) shown where people meet
+- The stability tiers ([roadmap](../../roadmap.md#stability-tiers)) shown where people meet
   each surface: a note at the top of each doc, a `stability` field on catalog entries, shown by
   `sitroom widgets` and in the web catalog.
 - Settle the open pull requests: merge each one, or move it to an experiment. Done: #12 to #16
@@ -26,9 +37,3 @@ Make changes safe to land, and mark what is experimental, before the larger work
 - The code-health part of osdlc's Rust package standard
   ([`S-package-shape-rs`](https://github.com/osdlc/osdlc/blob/main/docs/planning/standards/S-package-shape-rs.md)): workspace lints,
   a `description` and `repository` on every crate. In #31.
-
-## Done when
-
-- CI gates every pull request on Linux and macOS.
-- Every surface in the roadmap's table shows its tier where it is documented.
-- No pull request from #6 to #16 is open without a decision.
