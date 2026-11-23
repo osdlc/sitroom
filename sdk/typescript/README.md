@@ -1,5 +1,8 @@
 # TypeScript plugin SDK
 
+> **Stability: experimental.** The SDK can change or be removed in any release before 1.0, with a
+> CHANGELOG entry. See the [stability tiers](../../docs/roadmap.md#stability-tiers).
+
 [`sitroom-plugin.ts`](sitroom-plugin.ts) is the whole SDK: one file, no packages. Node 24
 runs it as is (it strips the types), and so does Bun. It uses only erasable TypeScript syntax
 (no enums, no namespaces), so there is no build step.

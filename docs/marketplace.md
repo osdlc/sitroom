@@ -1,5 +1,9 @@
 # Installing plugin packages
 
+> **Stability: experimental.** The marketplace index format and where packages are installed can
+> change or be removed in any release before 1.0, with a CHANGELOG entry. See the [stability
+> tiers](roadmap.md#stability-tiers).
+
 `sitroom plugin install` adds a [plugin package](plugins.md#package-it) to
 `<data home>/sitroom/plugins/<id>/` (`~/.local/share/sitroom/plugins/` by default, moved by
 `XDG_DATA_HOME`), where every config finds it. Packages come from a marketplace index, a

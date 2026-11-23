@@ -24,7 +24,8 @@ pub fn run(config_paths: &[PathBuf], query: &str, tag: Option<&str>, json: bool)
     Ok(())
 }
 
-/// One line per entry (ID, kind, name, tags), then its description indented.
+/// One line per entry (ID, kind, stability tier, name, tags), then its
+/// description indented.
 fn table(entries: &[&CatalogEntry]) -> String {
     let id_width = entries.iter().map(|e| e.id.len()).max().unwrap_or(0);
     let name_width = entries.iter().map(|e| e.name.len()).max().unwrap_or(0);
@@ -37,8 +38,9 @@ fn table(entries: &[&CatalogEntry]) -> String {
             EntryKind::Plugin => "market",
         };
         let line = format!(
-            "{:id_width$}  {kind:7}  {:name_width$}  {}",
+            "{:id_width$}  {kind:7}  {:12}  {:name_width$}  {}",
             e.id,
+            e.stability.as_str(),
             e.name,
             e.tags.join(", ")
         );
@@ -60,7 +62,7 @@ mod tests {
         let found = search(&entries, "requests", Some("github"));
         let text = table(&found);
         assert!(
-            text.starts_with("github-prs  builtin  Pull requests"),
+            text.starts_with("github-prs  builtin  experimental  Pull requests"),
             "{text}"
         );
         assert!(text.contains("\n    Open pull requests"), "{text}");

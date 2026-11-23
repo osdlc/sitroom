@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import type { CatalogEntry, ClientMessage, Size, TileUpdate } from '../contract'
-import { buildConfig, fields, freeId, installed } from '../catalog'
+import { TIERS, buildConfig, fields, freeId, installed } from '../catalog'
 import { inlineMarkdown } from '../format'
 import TileCard from './TileCard.vue'
 
@@ -63,6 +63,7 @@ onMounted(() => first.value?.focus())
           <p class="muted">
             {{ entry.id }} · {{ entry.source === 'bundled' ? 'bundled plugin' : entry.kind === 'builtin' ? 'built-in' : installed(entry) ? 'plugin package' : 'marketplace' }}
             · v{{ entry.version }}
+            · <span class="tier" :title="TIERS[entry.stability ?? 'experimental']">{{ entry.stability ?? 'experimental' }}</span>
           </p>
         </div>
         <button type="button" class="close" aria-label="Close" title="Close (Esc)" @click="emit('close')">✕</button>

@@ -1,5 +1,9 @@
 # Command line conventions
 
+> **Stability: experimental.** The commands, their flags and exit codes, the `--json` output and the
+> JSON Schemas from `sitroom schema` can change or be removed in any release before 1.0, with a
+> CHANGELOG entry. See the [stability tiers](roadmap.md#stability-tiers).
+
 The `sitroom` command follows the osdlc CLI standard (`standards/cli-interface.md` in
 osdlc/osdlc). The shared parts live in `crates/core/src/cli_kit/`, which knows nothing about sitroom,
 so it can move into a shared `cli-kit` crate once another Rust tool needs it.

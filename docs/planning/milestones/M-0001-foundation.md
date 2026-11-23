@@ -2,7 +2,7 @@
 type: milestone
 schema_version: '2'
 id: M-0001
-state: open/planned
+state: closed/done
 title: Foundation
 created: 2026-11-14
 tags:
@@ -10,6 +10,7 @@ tags:
 - stability
 description: Make changes safe to land, and mark what is experimental.
 version: 0.9.0
+completion_note: CI gates every pull request (#20); #6 to #16 are settled (#12 to #16 merged, #6 merged as an experiment with #30); workspace lints and crate metadata (#31); every surface shows its stability tier in its doc, and catalog entries carry a stability field shown by sitroom widgets, the web view and the native app.
 ---
 
 # Foundation
@@ -30,7 +31,9 @@ Make changes safe to land, and mark what is experimental, before the larger work
   the generated types, all on every pull request. Windows runs without gating. Done in #20.
 - The stability tiers ([roadmap](../../roadmap.md#stability-tiers)) shown where people meet
   each surface: a note at the top of each doc, a `stability` field on catalog entries, shown by
-  `sitroom widgets` and in the web catalog.
+  `sitroom widgets` and in the web catalog. Done: a note at the top of each surface's doc, and
+  `stability` on catalog entries, shown by `sitroom widgets`, the web view's add dialog and the
+  native app's.
 - Settle the open pull requests: merge each one, or move it to an experiment. Done: #12 to #16
   are merged, and #6 (image widget and screensaver module) is merged as an experiment, with the
   fixes from its review in #30.

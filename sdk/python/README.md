@@ -1,5 +1,8 @@
 # Python plugin SDK
 
+> **Stability: experimental.** The SDK can change or be removed in any release before 1.0, with a
+> CHANGELOG entry. See the [stability tiers](../../docs/roadmap.md#stability-tiers).
+
 [`sitroom_plugin.py`](sitroom_plugin.py) is the whole SDK: one file, standard library only,
 Python 3.9 or later.
 

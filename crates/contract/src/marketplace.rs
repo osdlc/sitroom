@@ -4,7 +4,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::catalog::{CatalogEntry, EntryKind, MARKETPLACE, Package, Requirements};
+use crate::catalog::{CatalogEntry, EntryKind, MARKETPLACE, Package, Requirements, Stability};
 use crate::{Size, View};
 
 /// The index format this version of sitroom reads and writes.
@@ -111,6 +111,7 @@ impl IndexEntry {
             description: self.description.clone(),
             tags: self.tags.clone(),
             kind: EntryKind::Plugin,
+            stability: Stability::Experimental,
             source: MARKETPLACE.into(),
             default_size: self.size.unwrap_or(Size::Medium),
             config_schema: self.config_schema.clone(),

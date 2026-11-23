@@ -1,5 +1,9 @@
 # Writing a plugin
 
+> **Stability: experimental.** The stdio protocol, the plugin package format (`sitroom-plugin.yaml`)
+> and the SDKs can change or be removed in any release before 1.0, with a CHANGELOG entry. See the
+> [stability tiers](roadmap.md#stability-tiers).
+
 A plugin is any program that reads JSON-RPC requests on stdin and writes replies on stdout,
 one JSON message per line. Use any language. Sitroom starts it, asks it for a
 manifest once, then asks it for a view on a timer and draws that view in the terminal and

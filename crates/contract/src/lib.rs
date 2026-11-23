@@ -19,6 +19,7 @@ pub mod theme;
 
 pub use catalog::{
     CatalogEntry, CatalogResponse, EntryKind, MARKETPLACE, PACKAGE_FILE, Package, Requirements,
+    Stability,
 };
 pub use marketplace::{Index, IndexEntry};
 pub use theme::{ColorTheme, Tokens, Tone};

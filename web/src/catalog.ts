@@ -1,5 +1,12 @@
-import type { CatalogEntry, CatalogResponse } from './contract'
+import type { CatalogEntry, CatalogResponse, Stability } from './contract'
 import { apiHeaders } from './session'
+
+/** What each stability tier promises, as docs/roadmap.md says it. */
+export const TIERS: Record<Stability, string> = {
+  published: 'Published: changes only in backward-compatible ways within a major version.',
+  experimental: 'Experimental: can change or be removed in any release, with a CHANGELOG entry.',
+  internal: 'Internal: no promise; only sitroom itself uses it.',
+}
 
 /** `GET /api/catalog`: entries matching `q` and `tag`, and every tag. */
 export async function fetchCatalog(q: string, tag: string, signal?: AbortSignal): Promise<CatalogResponse> {

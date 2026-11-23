@@ -1,5 +1,8 @@
 # Desktop app, wallpaper and screensaver
 
+> **Stability: experimental.** The desktop app and its flags can change or be removed in any release
+> before 1.0, with a CHANGELOG entry. See the [stability tiers](roadmap.md#stability-tiers).
+
 `sitroom-desktop` (in `apps/desktop`) is sitroom as a desktop app. It is a separate
 binary from the `sitroom` CLI, so the CLI stays small. It is built with Tauri 2 and uses the
 system webview: WKWebView on macOS, WebView2 on Windows.
