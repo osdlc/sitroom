@@ -13,7 +13,7 @@
 import { MarkdownRender } from '@osdlc/markdown-render-vue'
 import '@osdlc/markdown-render/theme.css'
 import { ref } from 'vue'
-import { webUrl } from '../actions'
+import { runAction } from '../actions'
 
 defineProps<{ source: string }>()
 
@@ -30,13 +30,12 @@ function click(event: MouseEvent) {
   const link = (event.target as HTMLElement | null)?.closest('a')
   if (!link) return
   event.preventDefault()
-  const url = webUrl(link.getAttribute('href'))
-  if (url) window.open(url, '_blank', 'noopener')
+  runAction({ type: 'open_url', url: link.getAttribute('href') ?? '' })
 }
 </script>
 
 <template>
-  <div ref="root" class="w-md" @click="click">
+  <div ref="root" class="w-md" data-widget="text" @click="click">
     <MarkdownRender
       :source="source"
       :options="options"

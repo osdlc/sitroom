@@ -11,7 +11,6 @@ use ratatui::widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap};
 use sitroom_contract::rpc::LogLevel;
 use sitroom_contract::{Action, Cell as ViewCell, Status, TileUpdate, UptimeCheck, Widget};
 use sitroom_core::markdown;
-use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::canvas::Canvas;
 use crate::charts;
@@ -874,7 +873,7 @@ pub fn draw_waiting(f: &mut Canvas, p: &Palette, area: Rect, tile_id: &str) {
 /// Rows a text needs at this width: each of its lines, wrapped.
 fn text_rows(text: &str, markdown: bool, width: u16) -> u16 {
     let width = width.max(1);
-    let rows = match markdown {
+    let rows: usize = match markdown {
         true => parsed(text)
             .iter()
             .map(|l| match l.kind {
@@ -884,7 +883,7 @@ fn text_rows(text: &str, markdown: bool, width: u16) -> u16 {
             .sum(),
         false => text
             .split('\n')
-            .map(|l| l.width().div_ceil(width as usize).max(1))
+            .map(|l| fit::width(l).div_ceil(width as usize).max(1))
             .sum(),
     };
     u16::try_from(rows).unwrap_or(u16::MAX)
@@ -892,10 +891,10 @@ fn text_rows(text: &str, markdown: bool, width: u16) -> u16 {
 
 /// A text widget's lines: markdown with its styles (see
 /// `sitroom_core::markdown`), wrapped to `width`, or the text as it is.
-fn text_lines(p: &Palette, text: &str, markdown: bool, width: u16) -> Vec<Line<'static>> {
+fn text_lines<'a>(p: &Palette, text: &'a str, markdown: bool, width: u16) -> Vec<Line<'a>> {
     use markdown::LineKind;
     if !markdown {
-        return text.split('\n').map(|l| Line::raw(l.to_string())).collect();
+        return text.split('\n').map(Line::raw).collect();
     }
     let width = width.max(1);
     let mut out = vec![];
@@ -924,24 +923,39 @@ fn text_lines(p: &Palette, text: &str, markdown: bool, width: u16) -> Vec<Line<'
     out
 }
 
+/// Texts parsed recently, each with when it was last used. A frame measures
+/// each text and then draws it, and most frames show the same texts as the
+/// last one.
+#[derive(Default)]
+struct Parsed {
+    tick: u64,
+    texts: HashMap<String, (u64, Rc<Vec<markdown::Line>>)>,
+}
+
+/// Texts kept in `PARSED`; when it is full, the half used longest ago goes.
+const PARSED_TEXTS: usize = 256;
+
 thread_local! {
-    /// Texts parsed recently. A frame measures each text and then draws it,
-    /// and most frames show the same texts as the last one.
-    static PARSED: RefCell<HashMap<String, Rc<Vec<markdown::Line>>>> =
-        RefCell::new(HashMap::new());
+    static PARSED: RefCell<Parsed> = RefCell::default();
 }
 
 /// `text` read as markdown, from `PARSED` when it was read recently.
 fn parsed(text: &str) -> Rc<Vec<markdown::Line>> {
     PARSED.with_borrow_mut(|cache| {
-        if let Some(lines) = cache.get(text) {
+        cache.tick += 1;
+        let tick = cache.tick;
+        if let Some((used, lines)) = cache.texts.get_mut(text) {
+            *used = tick;
             return lines.clone();
         }
-        if cache.len() >= 64 {
-            cache.clear();
+        if cache.texts.len() >= PARSED_TEXTS {
+            let mut ticks: Vec<u64> = cache.texts.values().map(|(t, _)| *t).collect();
+            ticks.sort_unstable();
+            let oldest_kept = ticks[ticks.len() / 2];
+            cache.texts.retain(|_, (t, _)| *t >= oldest_kept);
         }
         let lines = Rc::new(markdown::lines(text));
-        cache.insert(text.into(), lines.clone());
+        cache.texts.insert(text.into(), (tick, lines.clone()));
         lines
     })
 }
@@ -950,13 +964,9 @@ fn parsed(text: &str) -> Rc<Vec<markdown::Line>> {
 /// Rows after the first start with the line's indent (a list item's spaces,
 /// a quote's bar), unless the indent leaves no room.
 fn wrap(line: &markdown::Line, width: usize) -> Vec<Vec<markdown::Span>> {
-    let indent = match line.indent.width() < width {
+    let indent = match fit::width(&line.indent) < width {
         true => line.indent.as_str(),
         false => "",
-    };
-    let muted = markdown::Mark {
-        muted: true,
-        ..Default::default()
     };
     let mut rows: Vec<Vec<markdown::Span>> = vec![vec![]];
     let mut used = 0;
@@ -966,40 +976,31 @@ fn wrap(line: &markdown::Line, width: usize) -> Vec<Vec<markdown::Span>> {
     for span in &line.spans {
         for mut word in span.text.split_inclusive(' ') {
             while !word.is_empty() {
-                if used + word.trim_end_matches(' ').width() <= width {
+                if used + fit::width(word.trim_end_matches(' ')) <= width {
                     // Spaces past the edge are dropped, not wrapped.
-                    let piece = match used + word.width() <= width {
+                    let piece = match used + fit::width(word) <= width {
                         true => word,
                         false => word.trim_end_matches(' '),
                     };
-                    add(&mut rows, piece, span.mark, span.link.as_deref());
-                    used += piece.width();
+                    push(&mut rows, piece, span.mark, span.link.as_deref());
+                    used += fit::width(piece);
                     fresh &= span.mark.muted;
                     break;
                 }
                 if fresh {
                     // A word wider than the row: as much as fits, at least
                     // one character.
-                    let mut cut = 0;
-                    let mut cols = 0;
-                    for (i, c) in word.char_indices() {
-                        let w = c.width().unwrap_or(0);
-                        if cut > 0 && used + cols + w > width {
-                            break;
-                        }
-                        cols += w;
-                        cut = i + c.len_utf8();
-                    }
-                    add(&mut rows, &word[..cut], span.mark, span.link.as_deref());
-                    word = &word[cut..];
+                    let (head, tail) = fit::split(word, width - used);
+                    push(&mut rows, head, span.mark, span.link.as_deref());
+                    word = tail;
                 }
                 // The space at the break goes with it.
                 if let Some(last) = rows.last_mut().and_then(|r| r.last_mut()) {
                     last.text.truncate(last.text.trim_end_matches(' ').len());
                 }
                 rows.push(vec![]);
-                add(&mut rows, indent, muted, None);
-                used = indent.width();
+                push(&mut rows, indent, markdown::Mark::MUTED, None);
+                used = fit::width(indent);
                 fresh = true;
                 word = word.trim_start_matches(' ');
             }
@@ -1008,20 +1009,10 @@ fn wrap(line: &markdown::Line, width: usize) -> Vec<Vec<markdown::Span>> {
     rows
 }
 
-/// `text` at the end of the last row, joined to the span before it when the
-/// styles match.
-fn add(rows: &mut [Vec<markdown::Span>], text: &str, mark: markdown::Mark, link: Option<&str>) {
-    let Some(row) = rows.last_mut() else { return };
-    if text.is_empty() {
-        return;
-    }
-    match row.last_mut() {
-        Some(last) if last.mark == mark && last.link.as_deref() == link => last.text.push_str(text),
-        _ => row.push(markdown::Span {
-            text: text.into(),
-            mark,
-            link: link.map(Into::into),
-        }),
+/// `text` at the end of the last row.
+fn push(rows: &mut [Vec<markdown::Span>], text: &str, mark: markdown::Mark, link: Option<&str>) {
+    if let Some(row) = rows.last_mut() {
+        markdown::push_span(row, text, mark, link);
     }
 }
 

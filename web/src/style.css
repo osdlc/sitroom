@@ -223,7 +223,6 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 .w-list li[data-tone] { border-left: 3px solid var(--tone); padding-left: 8px; }
 /* Line breaks in the text are kept (a text file, a multi-line note). */
 .w-text { white-space: pre-wrap; }
-.w-text code { font-size: 0.85em; background: var(--track); border-radius: 3px; padding: 0 4px; }
 /* Markdown text (MarkdownText.vue): sitroom's colors and sizes, and single line
    breaks kept, as the TUI keeps them. */
 .w-md {

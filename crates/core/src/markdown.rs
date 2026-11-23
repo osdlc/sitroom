@@ -65,10 +65,31 @@ pub struct Mark {
     pub muted: bool,
 }
 
-impl Line {
-    /// The line's text without styles.
-    pub fn text(&self) -> String {
-        self.spans.iter().map(|s| s.text.as_str()).collect()
+impl Mark {
+    /// Decoration only: list markers, quote bars.
+    pub const MUTED: Mark = Mark {
+        bold: false,
+        italic: false,
+        code: false,
+        strike: false,
+        highlight: false,
+        muted: true,
+    };
+}
+
+/// Adds `text` at the end of `spans`, joined to the last span when its style
+/// and link are the same.
+pub fn push_span(spans: &mut Vec<Span>, text: &str, mark: Mark, link: Option<&str>) {
+    if text.is_empty() {
+        return;
+    }
+    match spans.last_mut() {
+        Some(last) if last.mark == mark && last.link.as_deref() == link => last.text.push_str(text),
+        _ => spans.push(Span {
+            text: text.into(),
+            mark,
+            link: link.map(Into::into),
+        }),
     }
 }
 
@@ -119,7 +140,7 @@ impl Writer {
         self.close();
         let mut spans = vec![];
         let indent = self.indent();
-        let text: String = self
+        let prefix: String = self
             .prefix
             .iter_mut()
             .map(|p| {
@@ -128,16 +149,7 @@ impl Writer {
                 text.clone()
             })
             .collect();
-        if !text.is_empty() {
-            spans.push(Span {
-                text,
-                mark: Mark {
-                    muted: true,
-                    ..Mark::default()
-                },
-                link: None,
-            });
-        }
+        push_span(&mut spans, &prefix, Mark::MUTED, None);
         self.line = Some(Line {
             kind,
             spans,
@@ -164,34 +176,15 @@ impl Writer {
             self.open(LineKind::Text);
         }
         let line = self.line.as_mut().expect("opened above");
-        match line.spans.last_mut() {
-            Some(last) if last.mark == mark && last.link.as_deref() == link => {
-                last.text.push_str(text)
-            }
-            _ => line.spans.push(Span {
-                text: text.into(),
-                mark,
-                link: link.map(Into::into),
-            }),
-        }
+        push_span(&mut line.spans, text, mark, link);
     }
 
     /// A blank line between blocks, keeping the quote bars.
     fn gap(&mut self) {
         self.close();
         let indent = self.indent();
-        let text = indent.trim_end();
-        let spans = match text.is_empty() {
-            true => vec![],
-            false => vec![Span {
-                text: text.into(),
-                mark: Mark {
-                    muted: true,
-                    ..Mark::default()
-                },
-                link: None,
-            }],
-        };
+        let mut spans = vec![];
+        push_span(&mut spans, indent.trim_end(), Mark::MUTED, None);
         self.out.push(Line {
             kind: LineKind::Text,
             spans,
@@ -202,18 +195,16 @@ impl Writer {
     /// Each child of a container as a block, with a blank line between them
     /// (none between the items of a tight list, or inside a tight item).
     fn blocks<'a>(&mut self, node: &'a AstNode<'a>) {
-        let tight = match &node.data().value {
-            NodeValue::List(l) => l.tight,
-            NodeValue::Item(_) | NodeValue::TaskItem(_) => node
-                .parent()
-                .is_some_and(|p| matches!(&p.data().value, NodeValue::List(l) if l.tight)),
-            _ => false,
+        let (tight, mut number) = match &node.data().value {
+            NodeValue::List(l) => (l.tight, l.start),
+            NodeValue::Item(_) | NodeValue::TaskItem(_) => (
+                node.parent()
+                    .is_some_and(|p| matches!(&p.data().value, NodeValue::List(l) if l.tight)),
+                1,
+            ),
+            _ => (false, 1),
         };
         let mut first = true;
-        let mut number = match &node.data().value {
-            NodeValue::List(l) => l.start,
-            _ => 1,
-        };
         for child in node.children() {
             if !shown(child) {
                 continue;
@@ -251,7 +242,7 @@ impl Writer {
             NodeValue::CodeBlock(c) => self.literal(&c.literal, LineKind::Code),
             NodeValue::MathBlock(m) => self.literal(&m.literal, LineKind::Code),
             NodeValue::HtmlBlock(h) => {
-                let text = without_tags(&h.literal);
+                let text = strip_tags(&h.literal);
                 let text: Vec<&str> = text.lines().filter(|l| !l.trim().is_empty()).collect();
                 self.literal(&text.join("\n"), LineKind::Text);
             }
@@ -273,7 +264,7 @@ impl Writer {
                         _ => "• ".to_string(),
                     },
                 };
-                self.contain(node, marker.clone(), " ".repeat(marker.chars().count()));
+                self.hang(node, marker);
             }
             NodeValue::BlockQuote | NodeValue::MultilineBlockQuote(_) => {
                 self.contain(node, "│ ".into(), "│ ".into())
@@ -301,14 +292,7 @@ impl Writer {
                     self.open(LineKind::Text);
                     for (j, cell) in row.children().enumerate() {
                         if j > 0 {
-                            self.push(
-                                " │ ",
-                                Mark {
-                                    muted: true,
-                                    ..Mark::default()
-                                },
-                                None,
-                            );
+                            self.push(" │ ", Mark::MUTED, None);
                         }
                         let mark = Mark {
                             bold: i == 0,
@@ -320,11 +304,17 @@ impl Writer {
                 }
             }
             NodeValue::FootnoteDefinition(f) => {
-                let marker = format!("[^{}] ", f.name);
-                self.contain(node, marker.clone(), " ".repeat(marker.chars().count()));
+                self.hang(node, format!("[^{}] ", f.name));
             }
             _ => self.blocks(node),
         }
+    }
+
+    /// A container whose first line starts with `marker` and whose other
+    /// lines are indented to line up after it.
+    fn hang<'a>(&mut self, node: &'a AstNode<'a>, marker: String) {
+        let rest = " ".repeat(marker.chars().count());
+        self.contain(node, marker, rest);
     }
 
     /// A container whose lines start with `first`, then `rest`.
@@ -495,19 +485,16 @@ fn plain_text<'a>(node: &'a AstNode<'a>) -> String {
         .collect()
 }
 
-/// `html` with its tags (`<...>`) taken out.
-fn without_tags(html: &str) -> String {
-    let mut out = String::new();
-    let mut rest = html;
+/// Drops every `<...>`. A `<` with no `>` after it stays.
+pub fn strip_tags(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
     while let Some(start) = rest.find('<') {
+        let Some(len) = rest[start..].find('>') else {
+            break;
+        };
         out.push_str(&rest[..start]);
-        match rest[start..].find('>') {
-            Some(end) => rest = &rest[start + end + 1..],
-            None => {
-                rest = &rest[start..];
-                break;
-            }
-        }
+        rest = &rest[start + len + 1..];
     }
     out.push_str(rest);
     out

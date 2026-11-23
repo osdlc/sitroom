@@ -21,6 +21,22 @@ pub fn truncate(s: &str, max: usize) -> String {
     cut(s, max)
 }
 
+/// `s` split after as many characters as fit in `max` cells, and at least
+/// one: a character wider than `max` still goes in the first part.
+pub fn split(s: &str, max: usize) -> (&str, &str) {
+    let mut end = 0;
+    let mut used = 0;
+    for (i, g) in s.grapheme_indices(true) {
+        let w = g.width();
+        if end > 0 && used + w > max {
+            break;
+        }
+        used += w;
+        end = i + g.len();
+    }
+    s.split_at(end)
+}
+
 /// The start of `s` and "…", in at most `max` cells (none if `max` is 0).
 fn cut(s: &str, max: usize) -> String {
     if max == 0 {

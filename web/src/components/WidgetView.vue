@@ -46,7 +46,7 @@ const keys = computed(() => {
 
 <template>
   <MarkdownText v-if="w.type === 'text' && w.markdown" :source="w.text" />
-  <p v-else-if="w.type === 'text'" class="w-text">{{ w.text }}</p>
+  <p v-else-if="w.type === 'text'" class="w-text" data-widget="text">{{ w.text }}</p>
 
   <div v-else-if="w.type === 'stat'" class="w-stat" :data-status="w.status ?? undefined">
     <span class="label">{{ w.label }}</span>

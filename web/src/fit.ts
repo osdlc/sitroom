@@ -130,10 +130,10 @@ function fitChildren(container: HTMLElement, limit: number): void {
     }
     if (fits(kid, limit)) return
     cut = true
-    // A one-line text (plain or markdown) just before the cut is a heading:
-    // it goes, and the child it heads gets its room.
+    // A one-line text widget just before the cut is a heading: it goes, and
+    // the child it heads gets its room.
     const before = kids[i - 1]
-    if (before?.matches('.w-text, .w-md') && oneLine(before)) {
+    if (before?.matches('[data-widget=text]') && oneLine(before)) {
       before.dataset.fitCut = ''
       clear(kid)
       if (fits(kid, limit)) return

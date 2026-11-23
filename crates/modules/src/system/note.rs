@@ -20,10 +20,10 @@ use anyhow::{Result, bail};
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use sitroom_contract::{CatalogEntry, Manifest, Size, Status, View, Widget};
+use sitroom_contract::{CatalogEntry, Manifest, Size, View};
 use sitroom_core::host::Module;
 
-use crate::common::manifest;
+use crate::common::{manifest, text_view};
 
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default, deny_unknown_fields)]
@@ -54,7 +54,7 @@ impl Module for Note {
             bail!("the note module needs `config: {{ text: ... }}`");
         }
         let title = config.title.unwrap_or_else(|| "Note".into());
-        self.view = Some(view(&config.text, !config.plain));
+        self.view = Some(text_view(&config.text, &title, !config.plain, usize::MAX));
         // The text only changes with the config, which starts the module
         // again: render rarely.
         Ok(manifest("note", &title, 3_600_000, 1_000, Size::Medium, 0))
@@ -65,22 +65,6 @@ impl Module for Note {
             Some(view) => Ok(view.clone()),
             None => bail!("the note module was not started"),
         }
-    }
-}
-
-fn view(text: &str, markdown: bool) -> View {
-    let text = text.trim_end();
-    let lines = text.lines().count();
-    View {
-        status: Status::Ok,
-        summary: match lines {
-            1 => "1 line".into(),
-            n => format!("{n} lines"),
-        },
-        root: Widget::Text {
-            text: text.into(),
-            markdown,
-        },
     }
 }
 
@@ -99,13 +83,19 @@ pub fn catalog() -> CatalogEntry {
             .into(),
         tags: super::strings(&["notes", "text", "local"]),
         config_schema: super::schema::<Config>(),
-        ..super::entry("note", "Note", Size::Medium, view(DEMO, true))
+        ..super::entry(
+            "note",
+            "Note",
+            Size::Medium,
+            text_view(DEMO, "Start here", true, usize::MAX),
+        )
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sitroom_contract::Widget;
 
     #[tokio::test]
     async fn shows_the_text_with_its_title() {
@@ -116,7 +106,7 @@ mod tests {
             .unwrap();
         assert_eq!(manifest.name, "Keys");
         let view = m.render().await.unwrap();
-        assert_eq!(view.summary, "2 lines");
+        assert_eq!(view.summary, "Keys · 2 lines");
         assert_eq!(
             view.root,
             Widget::Text {

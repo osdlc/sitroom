@@ -32,6 +32,7 @@ use sitroom_contract::{
     Action, CatalogEntry, ListItem, Manifest, Requirements, Size, Status, View, Widget,
 };
 use sitroom_core::host::Module;
+use sitroom_core::markdown::strip_tags;
 use tokio::task::JoinSet;
 
 const RDF_NS: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -379,21 +380,6 @@ fn collapse(s: &str) -> String {
         .filter(|w| !w.is_empty())
         .collect::<Vec<_>>()
         .join(" ")
-}
-
-/// Drops every `<...>`. A `<` with no `>` after it stays.
-fn strip_tags(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    let mut rest = s;
-    while let Some(start) = rest.find('<') {
-        let Some(len) = rest[start..].find('>') else {
-            break;
-        };
-        out.push_str(&rest[..start]);
-        rest = &rest[start + len + 1..];
-    }
-    out.push_str(rest);
-    out
 }
 
 /// Decodes `&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`, `&nbsp;` and numeric

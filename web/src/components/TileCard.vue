@@ -49,11 +49,16 @@ watch([selected, () => props.tile], mark, { flush: 'post', immediate: true })
 /**
  * Fits the view to the tile's box (fit.ts) after every update and whenever
  * the tile changes size, and again when a markdown text finishes rendering
- * (MarkdownText's `tile-refit` event). The tile's size comes from the grid,
- * not from what is cut inside it, so fitting never triggers itself.
+ * (MarkdownText's `tile-refit` event; several in one frame fit once). The
+ * tile's size comes from the grid, not from what is cut inside it, so
+ * fitting never triggers itself.
  */
 function fit() {
   if (root.value) fitTile(root.value)
+}
+let refit = 0
+function fitNextFrame() {
+  if (!refit) refit = requestAnimationFrame(() => ((refit = 0), fit()))
 }
 let resized: ResizeObserver | undefined
 onMounted(() => {
@@ -61,7 +66,10 @@ onMounted(() => {
   if (root.value) resized.observe(root.value)
   void document.fonts?.ready.then(fit)
 })
-onBeforeUnmount(() => resized?.disconnect())
+onBeforeUnmount(() => {
+  resized?.disconnect()
+  cancelAnimationFrame(refit)
+})
 watch([() => props.tile, () => props.size], fit, { flush: 'post' })
 
 // Scroll the selection into view when it moves, not on every data update.
@@ -80,7 +88,7 @@ watch(
   <section
     ref="root"
     class="tile"
-    @tile-refit="fit"
+    @tile-refit="fitNextFrame"
     :data-size="size"
     :data-status="tile?.view.status ?? 'unknown'"
     :data-tile-id="tileId"

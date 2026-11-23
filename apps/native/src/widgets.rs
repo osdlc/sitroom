@@ -433,8 +433,7 @@ impl Draw<'_> {
                 plain.push_str(&span.text);
             }
         }
-        let shown = plain.clone();
-        (StyledText::new(plain).with_runs(runs), shown)
+        (StyledText::new(plain.clone()).with_runs(runs), plain)
     }
 
     fn stat(
