@@ -410,6 +410,14 @@ const modules = [
           Install it with the install script, Homebrew, <code>cargo install sitroom</code> or a prebuilt binary from the
           GitHub Release.
         </p>
+        <p class="lede">
+          Every part someone could build on has a <a href={`${repo}/blob/main/docs/roadmap.md#stability-tiers`}>stability
+          tier</a>. <strong>Published</strong> parts change only in backward-compatible ways within a major version, and are
+          deprecated for a release before they go. <strong>Experimental</strong> parts can change in any release, with a
+          CHANGELOG entry. <strong>Internal</strong> ones promise nothing. Until 1.0, everything is experimental: the
+          config format, the plugin contract, the CLI, the web API and every widget. Each doc, and each
+          <a href={`${base}widgets/`}>widget</a>, says which tier it is in.
+        </p>
         <div class="status">
           <div>
             <h3><span class="dot ok"></span>Works now</h3>

@@ -3,12 +3,14 @@ import Base from '../../layouts/Base.astro'
 import SiteFooter from '../../components/SiteFooter.astro'
 import SiteHeader from '../../components/SiteHeader.astro'
 import { sections } from '../../lib/areas'
-import { kindLabel, shot, shotThemes, tagCounts, untestedLive, widgets } from '../../lib/registry'
+import { TIERS, TIERS_DOC, kindLabel, shot, shotThemes, tagCounts, tier, untestedLive, widgets, type Tier } from '../../lib/registry'
 
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/')
 // Tags on one widget only are still found by the search box.
 const tags = tagCounts().filter(([, n]) => n > 1)
 const builtins = widgets.filter((w) => w.kind === 'builtin').length
+const tiers = Object.keys(TIERS) as Tier[]
+const inTier = (t: Tier) => widgets.filter((w) => tier(w) === t).length
 const kinds = [
   {
     kind: 'builtin' as const,
@@ -43,6 +45,11 @@ const kinds = [
           <code>demo: true</code>.
         </p>
         <p class="blocks-link">
+          Each widget has a <a href={TIERS_DOC}>stability tier</a>: <em>published</em> widgets change only in
+          backward-compatible ways, <em>experimental</em> ones can change in any release. Before 1.0, every widget is
+          experimental.
+        </p>
+        <p class="blocks-link">
           Making your own? The <a href={`${base}blocks/`}>building blocks</a> show every widget type a tile can hold,
           live, with its fields and how they combine.
         </p>
@@ -57,6 +64,16 @@ const kinds = [
             <button type="button" data-kind="" aria-pressed="true">All</button>
             <button type="button" data-kind="builtin" aria-pressed="false">Built-in</button>
             <button type="button" data-kind="plugin" aria-pressed="false">Plugin</button>
+          </div>
+          <div class="kinds" role="group" aria-label="Stability tier">
+            <button type="button" data-tier="" aria-pressed="true">Any tier</button>
+            {
+              tiers.map((t) => (
+                <button type="button" data-tier={t} aria-pressed="false" title={TIERS[t]}>
+                  {t} <span class="count">{inTier(t)}</span>
+                </button>
+              ))
+            }
           </div>
         </form>
         <div class="tags" aria-label="Filter by tag">
@@ -112,6 +129,7 @@ const kinds = [
                           class="card"
                           data-id={w.id}
                           data-kind={w.kind}
+                          data-tier={tier(w)}
                           data-tags={w.tags.join(' ')}
                           data-text={`${w.id} ${w.name} ${w.description} ${w.tags.join(' ')}`.toLowerCase()}
                         >
@@ -138,6 +156,7 @@ const kinds = [
                               </h4>
                               <p class="meta">
                                 {kindLabel(w)}
+                                <span class="tier" title={TIERS[tier(w)]}>{tier(w)}</span>
                                 {untestedLive(w) && <span class="untested">untested live</span>}
                               </p>
                               <p class="desc">{w.description}</p>
@@ -152,7 +171,7 @@ const kinds = [
             </section>
           ))
         }
-        <p class="empty" hidden data-empty>Nothing matches. Try fewer words, or clear the tag.</p>
+        <p class="empty" hidden data-empty>Nothing matches. Try fewer words, or clear the tag or tier.</p>
       </div>
     </div>
   </main>
@@ -160,11 +179,12 @@ const kinds = [
   <SiteFooter />
 
   <script>
-    // Search, kind and tag filters, kept in the URL (?q=, ?kind=, ?tag=) so a
+    // Search, kind, tier and tag filters, kept in the URL (?q=, ?kind=, ?tier=, ?tag=) so a
     // filtered list can be linked to. A tag link on a widget page lands here.
     const cards = [...document.querySelectorAll<HTMLElement>('.card')]
     const search = document.querySelector<HTMLInputElement>('[data-search]')!
-    const kinds = [...document.querySelectorAll<HTMLButtonElement>('.kinds button')]
+    const kinds = [...document.querySelectorAll<HTMLButtonElement>('.kinds button[data-kind]')]
+    const tierButtons = [...document.querySelectorAll<HTMLButtonElement>('.kinds button[data-tier]')]
     const tagButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-tag]')]
     const status = document.querySelector<HTMLElement>('[data-status]')!
     const empty = document.querySelector<HTMLElement>('[data-empty]')!
@@ -175,6 +195,7 @@ const kinds = [
     const state = {
       q: params.get('q') ?? '',
       kind: known(params.get('kind'), kinds.map((b) => b.dataset.kind!)),
+      tier: known(params.get('tier'), tierButtons.map((b) => b.dataset.tier!)),
       tag: known(params.get('tag'), tagButtons.map((b) => b.dataset.tag!)),
     }
     search.value = state.q
@@ -185,12 +206,14 @@ const kinds = [
       for (const card of cards) {
         const ok =
           (!state.kind || card.dataset.kind === state.kind) &&
+          (!state.tier || card.dataset.tier === state.tier) &&
           (!state.tag || (card.dataset.tags ?? '').split(' ').includes(state.tag)) &&
           words.every((w) => card.dataset.text!.includes(w))
         card.hidden = !ok
         if (ok) shown++
       }
       for (const b of kinds) b.setAttribute('aria-pressed', String(b.dataset.kind === state.kind))
+      for (const b of tierButtons) b.setAttribute('aria-pressed', String(b.dataset.tier === state.tier))
       for (const b of tagButtons) b.setAttribute('aria-pressed', String(b.dataset.tag === state.tag))
       // A section, and its menu link, shows only while it has a card left; counts follow the filters.
       const visible = new Map<string, number>()
@@ -214,6 +237,7 @@ const kinds = [
         el.hidden = !visible.get(el.dataset.jump!)
       }
       status.textContent = shown === cards.length ? `${shown} widgets` : `${shown} of ${cards.length} widgets`
+      if (state.tier) status.textContent += `, ${state.tier}`
       if (state.tag) status.textContent += ` tagged ${state.tag}`
       empty.hidden = shown > 0
 
@@ -230,6 +254,12 @@ const kinds = [
     for (const b of kinds) {
       b.addEventListener('click', () => {
         state.kind = b.dataset.kind ?? ''
+        apply()
+      })
+    }
+    for (const b of tierButtons) {
+      b.addEventListener('click', () => {
+        state.tier = b.dataset.tier ?? ''
         apply()
       })
     }
@@ -556,6 +586,15 @@ const kinds = [
 
   .untested {
     color: var(--warn);
+  }
+
+  .kinds .count {
+    margin-left: 4px;
+  }
+
+  .kinds button[aria-pressed='true'] .count {
+    color: inherit;
+    opacity: 0.7;
   }
 
   .desc {
