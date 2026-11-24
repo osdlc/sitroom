@@ -4,6 +4,9 @@
 
 type Schema = Record<string, any>
 
+/** A stability tier, as docs/roadmap.md defines them. */
+export type Tier = 'published' | 'experimental' | 'internal'
+
 export interface Widget {
   id: string
   name: string
@@ -11,6 +14,8 @@ export interface Widget {
   description: string
   tags: string[]
   kind: 'builtin' | 'plugin'
+  /** Its stability tier (docs/roadmap.md); `experimental` when left out. */
+  stability?: Tier
   /** `builtin`, `bundled`, or a package folder relative to the repository. */
   source: string
   /** For a built-in: the bundle it is compiled in with (system, dev, ops, fun, agents, personal). */

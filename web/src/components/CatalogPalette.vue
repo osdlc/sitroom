@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import type { CatalogEntry, ModuleSummary } from '../contract'
-import { fetchCatalog, installed } from '../catalog'
+import type { CatalogEntry, ModuleSummary, Stability } from '../contract'
+import { TIERS, fetchCatalog, installed } from '../catalog'
 
 /**
  * The editor's "add" list: running modules (added straight to the screen)
@@ -12,6 +12,8 @@ const emit = defineEmits<{ addTile: [tileId: string]; pick: [entry: CatalogEntry
 
 const query = ref('')
 const tag = ref('')
+const tier = ref<Stability | ''>('')
+const tiers = Object.keys(TIERS) as Stability[]
 const entries = ref<CatalogEntry[]>([])
 const tags = ref<string[]>([])
 const problems = ref<string[]>([])
@@ -26,7 +28,7 @@ async function load() {
   controller = mine
   loading.value = true
   try {
-    const r = await fetchCatalog(query.value, tag.value, mine.signal)
+    const r = await fetchCatalog(query.value, tag.value, tier.value, mine.signal)
     entries.value = r.entries
     tags.value = r.tags
     problems.value = r.errors ?? []
@@ -43,7 +45,7 @@ watch(query, () => {
   window.clearTimeout(timer)
   timer = window.setTimeout(load, 150)
 })
-watch(tag, load)
+watch([tag, tier], load)
 load()
 onUnmounted(() => {
   window.clearTimeout(timer)
@@ -67,8 +69,14 @@ const runningIds = computed(() => new Set(props.modules.map((m) => m.tile_id)))
       <button type="button" :aria-pressed="tag === ''" @click="tag = ''">all</button>
       <button v-for="t in tags" :key="t" type="button" :aria-pressed="tag === t" @click="tag = tag === t ? '' : t">{{ t }}</button>
     </div>
+    <div class="catalog-tags" role="group" aria-label="Filter by stability">
+      <button type="button" :aria-pressed="tier === ''" @click="tier = ''">any tier</button>
+      <button v-for="t in tiers" :key="t" type="button" :aria-pressed="tier === t" :title="TIERS[t]" @click="tier = tier === t ? '' : t">
+        {{ t }}
+      </button>
+    </div>
 
-    <template v-if="running.length && !tag">
+    <template v-if="running.length && !tag && !tier">
       <h4>Running</h4>
       <button
         v-for="m in running"
@@ -98,7 +106,7 @@ const runningIds = computed(() => new Set(props.modules.map((m) => m.tile_id)))
       @click="emit('pick', e)"
     >
       <span>{{ e.name }} <small class="kind">{{ installed(e) ? (e.kind === 'builtin' ? '' : 'plugin') : 'marketplace' }}</small></span>
-      <small>{{ e.id }} · {{ e.description }}</small>
+      <small>{{ e.id }} · <span :title="TIERS[e.stability ?? 'experimental']">{{ e.stability ?? 'experimental' }}</span> · {{ e.description }}</small>
     </button>
     <details v-if="problems.length" class="catalog-problems">
       <summary>{{ problems.length }} problem{{ problems.length === 1 ? '' : 's' }} reading packages</summary>

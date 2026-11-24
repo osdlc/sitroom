@@ -4,14 +4,20 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use sitroom_contract::catalog::search;
-use sitroom_contract::{CatalogEntry, EntryKind};
+use sitroom_contract::{CatalogEntry, EntryKind, Stability};
 
-pub fn run(config_paths: &[PathBuf], query: &str, tag: Option<&str>, json: bool) -> Result<()> {
+pub fn run(
+    config_paths: &[PathBuf],
+    query: &str,
+    tag: Option<&str>,
+    stability: Option<Stability>,
+    json: bool,
+) -> Result<()> {
     let (entries, errors) = sitroom_modules::runtime::catalog(config_paths);
     for err in &errors {
         crate::warn(&format!("skipped a plugin package: {err}"));
     }
-    let found = search(&entries, query, tag);
+    let found = search(&entries, query, tag, stability);
     if json {
         // The full entries, demo views included.
         return crate::print_json("widgets", &serde_json::json!({ "entries": found }));
@@ -59,7 +65,7 @@ mod tests {
     fn table_lists_matches_with_descriptions() {
         // Built-ins only: the full catalog also reads packages installed on this machine.
         let entries = sitroom_modules::catalog();
-        let found = search(&entries, "requests", Some("github"));
+        let found = search(&entries, "requests", Some("github"), None);
         let text = table(&found);
         assert!(
             text.starts_with("github-prs  builtin  experimental  Pull requests"),

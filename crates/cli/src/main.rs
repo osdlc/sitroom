@@ -161,6 +161,9 @@ enum Command {
         /// Only entries with this tag.
         #[arg(long)]
         tag: Option<String>,
+        /// Only entries in this stability tier.
+        #[arg(long, value_enum)]
+        stability: Option<Tier>,
     },
     /// Print a JSON Schema for the config file or part of the contract.
     Schema {
@@ -289,6 +292,24 @@ enum SchemaKind {
     Package,
     /// A marketplace `index.json`.
     Index,
+}
+
+/// `sitroom widgets --stability`: the tiers in docs/roadmap.md.
+#[derive(Clone, Copy, ValueEnum)]
+enum Tier {
+    Published,
+    Experimental,
+    Internal,
+}
+
+impl From<Tier> for sitroom_contract::Stability {
+    fn from(t: Tier) -> Self {
+        match t {
+            Tier::Published => Self::Published,
+            Tier::Experimental => Self::Experimental,
+            Tier::Internal => Self::Internal,
+        }
+    }
 }
 
 fn main() -> ExitCode {
@@ -599,7 +620,11 @@ async fn run(mut cli: Cli) -> Result<()> {
         Command::Export { name, file, force } => {
             dashboards::export(&sources, &name, file.as_deref(), force)
         }
-        Command::Widgets { query, tag } => {
+        Command::Widgets {
+            query,
+            tag,
+            stability,
+        } => {
             // Packages next to every file in use; just the machine file's if
             // the files don't load.
             let paths = match sitroom_core::config::layers::load(&sources) {
@@ -609,7 +634,13 @@ async fn run(mut cli: Cli) -> Result<()> {
                     None => sitroom_core::config::default_path()?,
                 }],
             };
-            widgets::run(&paths, &query.join(" "), tag.as_deref(), json)
+            widgets::run(
+                &paths,
+                &query.join(" "),
+                tag.as_deref(),
+                stability.map(Tier::into),
+                json,
+            )
         }
         Command::Trust { file, remove } => trust(&sources, file, remove),
         Command::Schema { which } => {

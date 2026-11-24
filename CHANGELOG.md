@@ -10,8 +10,11 @@ released on their own; they record the stages the project was built in.
   the CLI, config and dashboards, the marketplace, the desktop app, the SDKs) opens with its tier
   from the [roadmap](docs/roadmap.md#stability-tiers); before 1.0 that is experimental.
   Catalog entries have a `stability` field (`published`, `experimental` or `internal`;
-  `experimental` when left out), shown by `sitroom widgets` (a new column), the web view's add
-  dialog and the native app's.
+  `experimental` when left out), shown by `sitroom widgets` (a new column), the web view's
+  "Add component" list and add dialog, and the native app's add dialog. Search by tier with
+  `sitroom widgets --stability <tier>`, `GET /api/catalog?stability=<tier>` or the web list's
+  tier buttons. The site explains the tiers on its home page, shows each widget's tier and
+  filters the widget registry by tier (`?tier=`).
 - **A first screen that says what to do.** The built-in demo (no config file yet, and the
   starter template for a new dashboard) opens on "start here": the keys, the terminal and
   browser views, and how to make your own. The second screen, "system", shows this machine:

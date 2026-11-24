@@ -5,11 +5,13 @@ import SiteFooter from '../../components/SiteFooter.astro'
 import SiteHeader from '../../components/SiteHeader.astro'
 import SizesPreview from '../../components/SizesPreview.astro'
 import {
+  TIERS,
   configExample,
   kindLabel,
   settings,
   shot,
   shotThemes,
+  tier,
   tuiTiles,
   untestedLive,
   widgets,
@@ -52,6 +54,7 @@ const sourceUrl = w.kind === 'plugin' && w.source !== 'bundled' ? `${repo}/tree/
         <p class="facts">
           <code>{w.id}</code>
           <span>{kindLabel(w)}</span>
+          <a href={`${base}widgets/?tier=${tier(w)}`} title={TIERS[tier(w)]}>{tier(w)}</a>
           <span>v{w.version}</span>
           <span>default size {w.default_size}</span>
         </p>

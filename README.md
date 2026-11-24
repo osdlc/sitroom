@@ -321,8 +321,8 @@ manage saved dashboards. See [docs/dashboards.md](docs/dashboards.md) for how th
 
 - `sitroom config` lists the config files in use, in order, and checks them.
 - `sitroom schema config` prints a JSON Schema for editor completion (yaml-language-server).
-- `sitroom widgets [words] [--tag t]` lists what can be added: built-in modules, bundled plugins
-  and installed plugin packages (see [docs/plugins.md](docs/plugins.md)).
+- `sitroom widgets [words] [--tag t] [--stability tier]` lists what can be added: built-in
+  modules, bundled plugins and installed plugin packages (see [docs/plugins.md](docs/plugins.md)).
 - `sitroom plugin install <id|file|url|folder>` installs a plugin package, checking its
   sha256 and asking first; `plugin list`, `update` and `remove` too (see
   [docs/marketplace.md](docs/marketplace.md)).

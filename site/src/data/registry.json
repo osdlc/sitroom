@@ -560,6 +560,7 @@
    "description": "Total CPU use over time, a meter per core, and the load average.",
    "id": "cpu",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "CPU",
    "requirements": {
     "binaries": [],
@@ -877,6 +878,7 @@
    "description": "Memory and swap use: a graph over time and a gauge for each.",
    "id": "memory",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Memory",
    "requirements": {
     "binaries": [],
@@ -1439,6 +1441,7 @@
    "description": "GPU load over time, with a utilization and a memory gauge per GPU. Reads ioreg on macOS, nvidia-smi for NVIDIA cards, and amdgpu's sysfs files on Linux.",
    "id": "gpu",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "GPU",
    "requirements": {
     "binaries": [],
@@ -2450,6 +2453,7 @@
    "description": "Download and upload speed across all network interfaces.",
    "id": "network",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Network",
    "requirements": {
     "binaries": [],
@@ -3008,6 +3012,7 @@
    "description": "Disk reads and writes over time, and space used per volume.",
    "id": "disk",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Disk",
    "requirements": {
     "binaries": [],
@@ -3140,6 +3145,7 @@
    "description": "The busiest processes by CPU, with their memory use.",
    "id": "processes",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Processes",
    "requirements": {
     "binaries": [],
@@ -3255,6 +3261,7 @@
    "description": "Open pull requests waiting for your review, and your own. Reads them with the gh CLI and its login.",
    "id": "github-prs",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Pull requests",
    "requirements": {
     "binaries": [
@@ -3370,6 +3377,7 @@
    "description": "Open issues assigned to you, and the ones you opened. Reads them with the gh CLI and its login.",
    "id": "github-issues",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Issues",
    "requirements": {
     "binaries": [
@@ -3448,6 +3456,7 @@
    "description": "CPU and memory of one process and the processes it started, as three numbers. With no settings it watches sitroom itself and its plugins. Add it several times with `builtin: process`.",
    "id": "process",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Sitroom",
    "requirements": {
     "binaries": [],
@@ -3550,6 +3559,7 @@
    "description": "Follows a log file, colors lines by level, and can show only lines that match some text. Add it several times with `builtin: log`.",
    "id": "log",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Log",
    "requirements": {
     "binaries": [],
@@ -4638,6 +4648,7 @@
    "description": "Checks that websites and APIs answer, with uptime and response times. Each check is a URL or a full curl command.",
    "id": "uptime",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Uptime",
    "requirements": {
     "binaries": [
@@ -4703,6 +4714,7 @@
    "description": "Shows a text or markdown file and shows it again when it changes. Good for a todo list or notes. Add it several times with `builtin: textfile`.",
    "id": "textfile",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Text file",
    "requirements": {
     "binaries": [],
@@ -4798,6 +4810,7 @@
    "description": "Battery charge as a gauge, with the power source and the time left (or to full). Reads pmset on macOS and /sys/class/power_supply on Linux.",
    "id": "battery",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Battery",
    "requirements": {
     "binaries": [],
@@ -4870,6 +4883,7 @@
    "description": "Shows the output of a command, run again on each refresh. Display only. Add it several times with `builtin: cmdrunner`.",
    "id": "cmdrunner",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Command",
    "requirements": {
     "binaries": [],
@@ -4943,6 +4957,7 @@
    "description": "Whether the firewall, disk encryption and system protections are on. macOS: firewall, FileVault, SIP and Gatekeeper. Linux (best effort): firewall service, encrypted volumes, SELinux or AppArmor, Secure Boot.",
    "id": "security",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Security",
    "requirements": {
     "binaries": [],
@@ -5139,6 +5154,7 @@
    "description": "Shows what a URL returns, fetched again on each refresh: a view or widget in sitroom's JSON, values picked out of any JSON, or text. Add it several times with `builtin: http`.",
    "id": "http",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "URL",
    "requirements": {
     "binaries": [],
@@ -5312,6 +5328,7 @@
    "description": "Shows a file another program writes: a view or widget in the sitroom's JSON, values picked out of any JSON, or text. Watches the file and shows it again when it changes. Add it several times with `builtin: file`.",
    "id": "file",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "File",
    "requirements": {
     "binaries": [],
@@ -5374,6 +5391,7 @@
    "description": "Shows the pictures in a folder one after another. The terminal draws them with Kitty, iTerm2 or Sixel graphics when it supports them, and with colored half blocks otherwise. Its `refresh:` sets how long each one stays.",
    "id": "screensaver",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Screensaver",
    "requirements": {
     "binaries": [],
@@ -5541,6 +5559,7 @@
    "description": "Jira issues from your own JQL searches, in Jira Cloud or Server. Untested live: built from the API docs with sample data.",
    "id": "jira",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Jira",
    "requirements": {
     "binaries": [],
@@ -5671,6 +5690,7 @@
    "description": "Linear issues assigned to you or created by you. Untested live: built from the API docs with sample data.",
    "id": "linear",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Linear",
    "requirements": {
     "binaries": [],
@@ -5852,6 +5872,7 @@
    "description": "Forgejo and Gitea issues and pull requests across your repositories, e.g. on Codeberg. Untested live: built from the API docs with sample data.",
    "id": "forgejo",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Forgejo",
    "requirements": {
     "binaries": [],
@@ -5961,6 +5982,7 @@
    "description": "Local git repositories: branch, commits ahead of and behind the upstream, and uncommitted changes. Runs git status in each one.",
    "id": "git",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Git",
    "requirements": {
     "binaries": [
@@ -6083,6 +6105,7 @@
    "description": "Running Docker containers: name, image, status, CPU and memory. Shows an error tile when the Docker daemon is not running.",
    "id": "docker",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Docker",
    "requirements": {
     "binaries": [
@@ -6301,6 +6324,7 @@
    "description": "Kubernetes pods by namespace with their status, ready containers, restarts and age, read with kubectl. Failing pods are listed first.",
    "id": "kubernetes",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Kubernetes",
    "requirements": {
     "binaries": [
@@ -6393,6 +6417,7 @@
    "description": "This machine's public IP address, with its city, network and time zone, from ipinfo.io (no key needed). Notes when the address changes.",
    "id": "ipinfo",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Public IP",
    "requirements": {
     "binaries": [],
@@ -6560,6 +6585,7 @@
    "description": "Pi-hole v6 on your network: queries and blocked queries today, active clients, whether blocking is on, and the most blocked domains. Click a domain to see its queries. Untested live: built from the API docs with sample responses.",
    "id": "pihole",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Pi-hole",
    "requirements": {
     "binaries": [],
@@ -6726,6 +6752,7 @@
    "description": "Torrents in Transmission: progress, speeds, time left, ratio and errors, from its RPC API. Click one to open the web UI. Untested live: built from the RPC spec with a sample response.",
    "id": "transmission",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Transmission",
    "requirements": {
     "binaries": [],
@@ -7125,6 +7152,7 @@
    "description": "Made-up, moving data in every widget style, for trying layouts and themes. Add it several times with `builtin: demo` and different settings.",
    "id": "demo",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Demo",
    "requirements": {
     "binaries": [],
@@ -7275,6 +7303,7 @@
    "description": "The local time in one or more time zones, as a row of stats, a column, a world-clock table, analog dials or big digital text. Uses the system's time zone database; no network.",
    "id": "clock",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Clock",
    "requirements": {
     "binaries": [],
@@ -7392,6 +7421,7 @@
    "description": "Top stories from Hacker News (or new, best, Ask HN, Show HN, jobs), with points, comments and age. Click a story to open it. Public API, no key.",
    "id": "hackernews",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Hacker News",
    "requirements": {
     "binaries": [],
@@ -7498,6 +7528,7 @@
    "description": "The newest items of some RSS and Atom feeds, as one list. Click an item to open it.",
    "id": "feedreader",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Feed reader",
    "requirements": {
     "binaries": [],
@@ -7630,6 +7661,7 @@
    "description": "The hot, new, top or rising posts of a subreddit, with points, comments, author and flair. Click a post to open it on Reddit. No key. Reddit usually refuses its JSON to clients without an account; the tile then reads the subreddit's feed, which has only title, author and age.",
    "id": "subreddit",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Subreddit",
    "requirements": {
     "binaries": [],
@@ -7752,6 +7784,7 @@
    "description": "The latest or top dev.to articles for a tag, an author or the whole site, with reactions, comments and reading time. Click an article to open it. Public API, no key.",
    "id": "devto",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "dev.to",
    "requirements": {
     "binaries": [],
@@ -7942,6 +7975,7 @@
    "description": "Bitcoin fee rates (fast, 30 minutes, 1 hour), the mempool's size and the latest blocks with their pool and median fee, from mempool.space or your own instance. Warns when fees run high. Public API, no key.",
    "id": "mempool",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Mempool",
    "requirements": {
     "binaries": [],
@@ -8077,6 +8111,7 @@
    "description": "Prices and 24-hour change of the coins you pick, from CoinGecko. Warns when a coin falls at least a set percent, or a coin id is not found. Click a coin to open its CoinGecko page. Public API, no key.",
    "id": "crypto",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Crypto prices",
    "requirements": {
     "binaries": [],
@@ -8190,6 +8225,7 @@
    "description": "Today's games and scores for a league (NBA, NFL, NHL, MLB, football leagues and more), live games first, optionally only your teams. Click a game to open it on ESPN. ESPN's public scoreboard API: no key, but undocumented.",
    "id": "scores",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Scores",
    "requirements": {
     "binaries": [],
@@ -8317,6 +8353,7 @@
    "description": "OpenAI Codex limits (5-hour and weekly) and tokens per day, from `codex app-server` or Codex's session logs.",
    "id": "codex",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Codex",
    "requirements": {
     "binaries": [
@@ -8368,6 +8405,7 @@
    "description": "GitHub Copilot monthly quotas, such as premium requests, and when they reset. Signs in with the gh CLI's login.",
    "id": "copilot",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Copilot",
    "requirements": {
     "binaries": [
@@ -8457,6 +8495,7 @@
    "description": "Cursor usage this billing cycle: included usage and on-demand spend. Signs in with the Cursor app's own login. Paid plans untested live.",
    "id": "cursor",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Cursor",
    "requirements": {
     "binaries": [
@@ -8541,6 +8580,7 @@
    "description": "Google Antigravity model quotas, read from the app's local language server while Antigravity is open. Untested live.",
    "id": "antigravity",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Antigravity",
    "requirements": {
     "binaries": [
@@ -8699,6 +8739,7 @@
    "description": "Gemini CLI requests against its daily quota (an estimate) and tokens per day, from the chats Gemini CLI saves. No network.",
    "id": "gemini",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Gemini CLI",
    "requirements": {
     "binaries": [],
@@ -8841,6 +8882,7 @@
    "description": "OpenCode tokens and cost per day, and the models used, from OpenCode's local database (read with sqlite3) or older message files. No network.",
    "id": "opencode",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "OpenCode",
    "requirements": {
     "binaries": [
@@ -8984,6 +9026,7 @@
    "description": "Pi coding agent tokens and cost per day, and the models used, from Pi's local session logs. No network.",
    "id": "pi",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Pi",
    "requirements": {
     "binaries": [],
@@ -9200,6 +9243,7 @@
    "description": "Current weather and a short forecast from Open-Meteo (no key needed), for a place name or a latitude and longitude.",
    "id": "weather",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Weather",
    "requirements": {
     "binaries": [],
@@ -9321,6 +9365,7 @@
    "description": "Open tasks from a local file: a markdown checklist (`- [ ]`) or todo.txt, with priorities, tags and due dates. Overdue tasks are flagged.",
    "id": "todo",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Todo",
    "requirements": {
     "binaries": [],
@@ -9401,6 +9446,7 @@
    "description": "The moon's phase, how much of it is lit, and the next full and new moon. Computed here, with no network, from the mean lunar month, so it can be off by about a day.",
    "id": "lunar",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Moon",
    "requirements": {
     "binaries": [],
@@ -9576,6 +9622,7 @@
    "description": "Today's agenda from an iCalendar (.ics) feed or file, with the next meeting and its join link. Google, Outlook and iCloud all publish a private .ics address, so no sign-in is needed. Handles repeating events and time zones.",
    "id": "calendar",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Calendar",
    "requirements": {
     "binaries": [],
@@ -9694,6 +9741,7 @@
    "description": "An org-mode agenda: open TODO headlines from .org files with their SCHEDULED and DEADLINE dates, overdue first. Reads #+TODO keywords and [#A] priorities.",
    "id": "org-agenda",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Agenda",
    "requirements": {
     "binaries": [],
@@ -9809,6 +9857,7 @@
    "description": "Open Markdown tasks (- [ ]) from your notes, in the Obsidian Tasks format: due, scheduled and start dates, priorities and #tags. Overdue first.",
    "id": "markdown-tasks",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Tasks",
    "requirements": {
     "binaries": [],
@@ -9929,6 +9978,7 @@
    "description": "Open tasks from a todo.txt file: priorities, +project and @context tags, due: dates and t: thresholds. Overdue first.",
    "id": "todo-txt",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "todo.txt",
    "requirements": {
     "binaries": [],
@@ -10030,6 +10080,7 @@
    "description": "Pending Taskwarrior tasks, most urgent first, read with `task export`. Shows due dates, projects and tags; a link in a task or its notes opens from the tile.",
    "id": "taskwarrior",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Taskwarrior",
    "requirements": {
     "binaries": [
@@ -10162,6 +10213,7 @@
    "description": "The backlog of an osdlc sdlc vault: tasks in progress, blocked and ready, and how far the open milestones have come. Reads the markdown entities in docs/planning; read-only.",
    "id": "sdlc",
    "kind": "builtin",
+   "stability": "experimental",
    "name": "Backlog",
    "requirements": {
     "binaries": [],
@@ -10278,6 +10330,7 @@
    "description": "Claude Code accounts and how much of each 5-hour and weekly limit is used, from cswap. Click an account to switch to it.",
    "id": "cswap",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Claude accounts",
    "requirements": {
     "binaries": [
@@ -10376,6 +10429,7 @@
    "description": "An Airbrake project's unresolved error groups, most recent first, with notice counts, environment, where it happened and age. Click one to open it in Airbrake. Untested live: built from the API docs with sample data.",
    "id": "airbrake",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Airbrake",
    "requirements": {
     "binaries": [
@@ -10546,6 +10600,7 @@
    "description": "Open Asana tasks assigned to you in a workspace, or every open task in one project: overdue first, then by due date, with overdue and due-today counts. Untested live: built from Asana's API docs and a sample response.",
    "id": "asana",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Asana",
    "requirements": {
     "binaries": [
@@ -10746,6 +10801,7 @@
    "description": "Azure DevOps work items (from a WIQL query, default: open items assigned to you) and active pull requests for one project (all of them, unless reviewer_id or creator_id narrows the list). Priority 1 items, rejected and conflicting pull requests show red, priority 2 and \"waiting for author\" yellow, approved green. Click one to open it. Untested live: built from the API docs and sample responses.",
    "id": "azure-devops",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Azure DevOps",
    "requirements": {
     "binaries": [
@@ -10927,6 +10983,7 @@
    "description": "Recent Buildkite builds for an organization or one pipeline, newest first, with passed, failed and running counts. The tile turns red when a pipeline's newest finished build failed; canceled and blocked builds don't count as failed or running. Untested live: built from Buildkite's REST API docs and a sample response.",
    "id": "buildkite",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Buildkite",
    "requirements": {
     "binaries": [
@@ -11091,6 +11148,7 @@
    "description": "The latest CircleCI pipelines of your projects, with each one's commit, branch and workflow result: failed red, on hold yellow, passed green. The tile turns red while a project's newest pipeline is failing, on any branch unless `branch` is set (try `branch: main`). Click one to open it in the CircleCI app. Untested live: built from the API v2 docs and sample responses.",
    "id": "circleci",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "CircleCI",
    "requirements": {
     "binaries": [
@@ -11279,6 +11337,7 @@
    "description": "Datadog monitors: how many are alerting, warning or without data, and a list of the ones that need a look, each linking to the monitor. Filter by monitor tags or name. Built from Datadog's public API docs (GET /api/v1/monitor) and untested live.",
    "id": "datadog",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Datadog monitors",
    "requirements": {
     "binaries": [
@@ -11414,6 +11473,7 @@
    "description": "Your DigitalOcean droplets: state, size, region and public IP, with the count and monthly cost in the summary. Click one to open it in the control panel. Untested live: built from the API docs with sample data.",
    "id": "digitalocean",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "DigitalOcean",
    "requirements": {
     "binaries": [
@@ -11606,6 +11666,7 @@
    "description": "Gerrit changes, one list per search query (default: your open changes and the ones waiting for your review), with Code-Review and Verified votes as tags. A -2 or failed Verified shows red, a -1 yellow, a +2 green. Click a change to open it. Untested live with a login: built from the API docs and a sample response. Anonymous queries (auth none) were checked on a public server.",
    "id": "gerrit",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Gerrit",
    "requirements": {
     "binaries": [
@@ -11753,6 +11814,7 @@
    "description": "Recent GitHub Actions runs for a few repositories, newest first, with passed, failed and running counts. Uses the gh CLI and its login.",
    "id": "gh-actions",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "GitHub Actions",
    "requirements": {
     "binaries": [
@@ -11941,6 +12003,7 @@
    "description": "Local git repositories at a glance: branch, uncommitted changes, commits not pushed or pulled, and the age of the last commit.",
    "id": "git-repos",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Git repositories",
    "requirements": {
     "binaries": [
@@ -12127,6 +12190,7 @@
    "description": "GitLab merge requests and issues, one list per section, each a query on the REST API with your own parameters (scope, state, labels, reviewer...). Merge conflicts show red, ready-to-merge green, overdue issues red. Click an item to open it. gitlab.com or self-managed. Untested live: built from the API docs and a sample response.",
    "id": "gitlab",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "GitLab",
    "requirements": {
     "binaries": [
@@ -12282,6 +12346,7 @@
    "description": "Your pending GitLab to-do items: review and approval requests, mentions, assignments, failed pipelines. Failures show red, people waiting on you yellow. Click one to open it. gitlab.com or self-managed. Untested live: built from the API docs and a sample response.",
    "id": "gitlab-todos",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "GitLab to-dos",
    "requirements": {
     "binaries": [
@@ -12449,6 +12514,7 @@
    "description": "Your Healthchecks.io cron and heartbeat checks: counts of up, late and down checks, then the checks with down and late ones first. Click a check to open it on Healthchecks (with a full API key; a read-only key links to the front page). Works with a self-hosted Healthchecks too. Untested live: built from the Management API v3 docs and a sample response.",
    "id": "healthchecks",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Healthchecks",
    "requirements": {
     "binaries": [
@@ -12511,6 +12577,7 @@
    "description": "The smallest example plugin. A greeting, a clock and a render counter.",
    "id": "hello",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Hello",
    "requirements": {
     "binaries": [
@@ -12698,6 +12765,7 @@
    "description": "The jobs on a Jenkins server, or one of its views, with each job's last build: failing first, then unstable, passing and the rest. Click a row to open the build. Jobs inside folders and multibranch pipelines are not shown yet. Untested live: built from Jenkins' remote access API docs and a sample response.",
    "id": "jenkins",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Jenkins",
    "requirements": {
     "binaries": [
@@ -13124,6 +13192,7 @@
    "description": "The time to open a TCP connection to each target, as a live chart. Turns yellow when a target is slow and red when it is down. No ping privileges needed.",
    "id": "latency",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Network latency",
    "requirements": {
     "binaries": [
@@ -13285,6 +13354,7 @@
    "description": "Open New Relic alert violations, critical first, with the policy and how long each has been open. Links to the incident when account_id is set. Counts cover the first page of results (the API pages them). Built from New Relic's public REST API v2 docs (GET /v2/alerts_violations.json) and untested live.",
    "id": "newrelic",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "New Relic alerts",
    "requirements": {
     "binaries": [
@@ -13446,6 +13516,7 @@
    "description": "Open Opsgenie alerts, unacknowledged and highest priority first, with owner, repeat count and age. Links to each alert when account is set. Any Opsgenie search query works. Built from Opsgenie's public Alert API docs (GET /v2/alerts) and untested live.",
    "id": "opsgenie",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Opsgenie alerts",
    "requirements": {
     "binaries": [
@@ -13631,6 +13702,7 @@
    "description": "Open PagerDuty incidents, triggered first, with service, assignee and age, each linking to the incident; and who is first on call now. Filter by service, team, urgency or escalation policy. Counts cover the newest 100 incidents. Built from PagerDuty's public REST API v2 docs (GET /incidents, GET /oncalls) and untested live.",
    "id": "pagerduty",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "PagerDuty",
    "requirements": {
     "binaries": [
@@ -13772,6 +13844,7 @@
    "description": "A Rollbar project's active items (errors and messages), most recent first, with level, occurrences, environment and age. Click one to open it in Rollbar. Untested live: built from the API docs with sample data.",
    "id": "rollbar",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Rollbar",
    "requirements": {
     "binaries": [
@@ -13948,6 +14021,7 @@
    "description": "Unresolved Sentry issues for an organization or one project: events, users and last seen, each linking to the issue. Any Sentry issue search works. Works with self-hosted Sentry. Built from Sentry's public API docs (the organization and project issues endpoints) and untested live.",
    "id": "sentry",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Sentry issues",
    "requirements": {
     "binaries": [
@@ -14097,6 +14171,7 @@
    "description": "Todoist tasks matching a filter, by default what's due today or overdue: overdue first, then the most urgent, with priority and labels as tags. Untested live: built from Todoist's API v1 docs and a sample response.",
    "id": "todoist",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Todoist",
    "requirements": {
     "binaries": [
@@ -14289,6 +14364,7 @@
    "description": "The open cards on a Trello board, soonest due first, with a bar per list. Overdue cards are red and cards due within a day are yellow. Untested live: built from Trello's REST API docs and a sample response.",
    "id": "trello",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Trello",
    "requirements": {
     "binaries": [
@@ -14404,6 +14480,7 @@
    "description": "Your UptimeRobot monitors: up or down and for how long, why it is down, the uptime over the last 30 days and the latest response time. Click one to open it in UptimeRobot. Untested live: built from the API docs with sample data.",
    "id": "uptimerobot",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "UptimeRobot",
    "requirements": {
     "binaries": [
@@ -14533,6 +14610,7 @@
    "description": "Zendesk tickets from a search, by default the unsolved ones assigned to you: status, priority, tags and last update. Urgent tickets turn the tile red. Click one to open it in Zendesk. Untested live: built from the API docs with sample data.",
    "id": "zendesk",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Zendesk",
    "requirements": {
     "binaries": [
@@ -14627,6 +14705,7 @@
    "description": "Battery charge as a gauge, with the power source and the time left (or to full). Reads pmset on macOS and /sys/class/power_supply on Linux. Python version of the built-in battery module.",
    "id": "battery-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Battery (Python)",
    "requirements": {
     "binaries": [
@@ -14716,6 +14795,7 @@
    "description": "Battery charge as a gauge, with the power source and the time left (or to full). Reads pmset on macOS and /sys/class/power_supply on Linux. TypeScript version of the built-in battery module.",
    "id": "battery-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Battery (TS)",
    "requirements": {
     "binaries": [
@@ -14823,6 +14903,7 @@
    "description": "The local time in one or more time zones, as a row of stats. Uses the system's time zone database; no network. Python version of the built-in clock module.",
    "id": "clock-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Clock (Python)",
    "requirements": {
     "binaries": [
@@ -14930,6 +15011,7 @@
    "description": "The local time in one or more time zones, as a row of stats. Uses the time zone data built into Node; no network. TypeScript version of the built-in clock module.",
    "id": "clock-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Clock (TS)",
    "requirements": {
     "binaries": [
@@ -15246,6 +15328,7 @@
    "description": "Container runtimes on this machine in one tile: Colima and Lima VMs (and Podman machines), every Docker context with whether its engine answers, and the containers on each engine. Each CLI is optional: one that is not installed is skipped, one that fails shows an error row. Set a program setting to \"\" or false to turn that source off; a program given as a path that does not exist shows an error row.",
    "id": "containers",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Containers and VMs",
    "requirements": {
     "binaries": [
@@ -15370,6 +15453,7 @@
    "description": "Running Docker containers: name, image, status, CPU and memory. Shows an error tile when the Docker daemon is not running. The Python copy of the built-in docker module, for the native-vs-plugin benchmark.",
    "id": "docker-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Docker (Python)",
    "requirements": {
     "binaries": [
@@ -15488,6 +15572,7 @@
    "description": "Running Docker containers: name, image, status, CPU and memory. Shows an error tile when the Docker daemon is not running. The TypeScript copy of the built-in docker module, for the native-vs-plugin benchmark.",
    "id": "docker-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Docker (TypeScript)",
    "requirements": {
     "binaries": [
@@ -15593,6 +15678,7 @@
    "description": "The newest items of some RSS and Atom feeds, as one list. Click an item to open it. Python version of the built-in feedreader module. Parses with the standard library's ElementTree.",
    "id": "feedreader-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Feed reader (Python)",
    "requirements": {
     "binaries": [
@@ -15698,6 +15784,7 @@
    "description": "The newest items of some RSS and Atom feeds, as one list. Click an item to open it. TypeScript version of the built-in feedreader module. Node has no XML parser, so it carries a small one.",
    "id": "feedreader-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Feed reader (TS)",
    "requirements": {
     "binaries": [
@@ -15802,6 +15889,7 @@
    "description": "Local git repositories: branch, commits ahead of and behind the upstream, and uncommitted changes. Runs git status in each one. Written in Python for the native-vs-plugin benchmark; the built-in git module shows the same.",
    "id": "git-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Git (Python)",
    "requirements": {
     "binaries": [
@@ -15905,6 +15993,7 @@
    "description": "Local git repositories: branch, commits ahead of and behind the upstream, and uncommitted changes. Runs git status in each one. Written in TypeScript for the native-vs-plugin benchmark; the built-in git module shows the same.",
    "id": "git-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Git (TypeScript)",
    "requirements": {
     "binaries": [
@@ -16015,6 +16104,7 @@
    "description": "Top stories from Hacker News (or new, best, Ask HN, Show HN, jobs), with points, comments and age. Click a story to open it. Public API, no key. Python version of the built-in hackernews module.",
    "id": "hackernews-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Hacker News (Python)",
    "requirements": {
     "binaries": [
@@ -16125,6 +16215,7 @@
    "description": "Top stories from Hacker News (or new, best, Ask HN, Show HN, jobs), with points, comments and age. Click a story to open it. Public API, no key. TypeScript version of the built-in hackernews module.",
    "id": "hackernews-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Hacker News (TS)",
    "requirements": {
     "binaries": [
@@ -16534,6 +16625,7 @@
    "description": "Prices and the change since the previous close of the symbols you pick, from Yahoo Finance, with a chart of each one's day. Warns when a symbol falls at least a set percent, or a symbol is not found. Click a row to open it on Yahoo Finance. Uses Yahoo's unofficial chart endpoint, no key, and can break without notice.",
    "id": "stocks",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Stocks",
    "requirements": {
     "binaries": [
@@ -16592,6 +16684,7 @@
    "description": "Shows a text or markdown file and shows it again when it changes. Good for a todo list or notes. Python version of the built-in textfile module.",
    "id": "textfile-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Text file (Python)",
    "requirements": {
     "binaries": [
@@ -16648,6 +16741,7 @@
    "description": "Shows a text or markdown file and shows it again when it changes. Good for a todo list or notes. TypeScript version of the built-in textfile module.",
    "id": "textfile-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Text file (TS)",
    "requirements": {
     "binaries": [
@@ -16844,6 +16938,7 @@
    "description": "Current weather and a short forecast from Open-Meteo (no key needed), for a place name or a latitude and longitude. The Python copy of the built-in weather module, for the native-vs-plugin benchmark.",
    "id": "weather-py",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Weather (Python)",
    "requirements": {
     "binaries": [
@@ -17043,6 +17138,7 @@
    "description": "Current weather and a short forecast from Open-Meteo (no key needed), for a place name or a latitude and longitude. The TypeScript copy of the built-in weather module, for the native-vs-plugin benchmark.",
    "id": "weather-ts",
    "kind": "plugin",
+   "stability": "experimental",
    "name": "Weather (TypeScript)",
    "requirements": {
     "binaries": [

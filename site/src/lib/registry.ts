@@ -2,10 +2,10 @@
 // scripts/registry.mjs writes from `sitroom widgets --json`.
 import data from '../data/registry.json'
 import shotSizes from '../data/registry-shots.json'
-import type { Widget } from './config-example.ts'
+import type { Tier, Widget } from './config-example.ts'
 import type { TileCapture } from './term-tile.ts'
 
-export { configExample, settings, type Setting, type Widget } from './config-example.ts'
+export { configExample, settings, type Setting, type Tier, type Widget } from './config-example.ts'
 
 export const widgets: Widget[] = (data.entries as unknown as Widget[])
   .slice()
@@ -23,6 +23,20 @@ export function kindLabel(w: Widget): string {
   if (w.kind === 'builtin') return 'built-in'
   return w.source === 'bundled' ? 'bundled plugin' : 'plugin package'
 }
+
+/** The stability tiers, in order, with what each promises (docs/roadmap.md). */
+export const TIERS: Record<Tier, string> = {
+  published:
+    'Changes only in backward-compatible ways within a major version, and is deprecated for at least one minor release before it is removed.',
+  experimental: 'Can change or be removed in any release, with a CHANGELOG entry. Use it, and expect to update.',
+  internal: 'No promise: only sitroom itself uses it.',
+}
+
+/** A widget's stability tier. */
+export const tier = (w: Widget): Tier => w.stability ?? 'experimental'
+
+/** The roadmap's section on stability tiers. */
+export const TIERS_DOC = 'https://github.com/osdlc/sitroom/blob/main/docs/roadmap.md#stability-tiers'
 
 /** Built from an API's docs and a sample response, never run against the real service. */
 export const untestedLive = (w: Widget) =>
