@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@osdlc/markdown-render':
         specifier: ^0.8.2
-        version: 0.8.2
+        version: 0.8.3
       '@osdlc/markdown-render-vue':
         specifier: ^0.8.1
         version: 0.8.1(vue@3.5.44(typescript@6.0.3))
@@ -83,8 +83,8 @@ packages:
     peerDependencies:
       vue: ^3.5
 
-  '@osdlc/markdown-render@0.8.2':
-    resolution: {integrity: sha512-SjcjPjP9+s7z8QJRbgM/bTs+phzsR/Wpkp0XR+uHA8y2eqPNOBD0cKOUbuj4oUVX38f51Ha39YruPR88zM3Rrw==}
+  '@osdlc/markdown-render@0.8.3':
+    resolution: {integrity: sha512-Kdl6P242ExjQ2vJhP1S3CW10m0rkPZ1tU8FyRuB5U0xwnFpIWzGMoJfnku3Re2cvsjA07qhUbpHLdoNf2RSZKg==}
     engines: {node: '>=22'}
     peerDependencies:
       katex: ^0.19.1
@@ -899,7 +899,7 @@ snapshots:
   '@osdlc/markdown-render-vue@0.8.1(vue@3.5.44(typescript@6.0.3))':
     dependencies:
       '@osdlc/gfm-table': 0.5.1
-      '@osdlc/markdown-render': 0.8.2
+      '@osdlc/markdown-render': 0.8.3
       '@types/hast': 3.0.5
       '@types/unist': 3.0.3
       vue: 3.5.44(typescript@6.0.3)
@@ -908,7 +908,7 @@ snapshots:
       - mermaid
       - supports-color
 
-  '@osdlc/markdown-render@0.8.2':
+  '@osdlc/markdown-render@0.8.3':
     dependencies:
       '@osdlc/markdown-link': 0.11.1
       '@osdlc/markdown-tags': 0.4.3

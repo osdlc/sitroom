@@ -1348,9 +1348,9 @@ dependencies = [
 
 [[package]]
 name = "config-layers"
-version = "0.7.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6c3cee320d8d0f85a63ab1e22313e29139234bb91768128361f7f409c0be881"
+checksum = "3ef5b271fee5aa4701873820650e38d6745d03bca2e73793e5ce816b2003ff0e"
 dependencies = [
  "serde",
  "serde-saphyr",
@@ -1714,7 +1714,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a"
 dependencies = [
  "quote",
- "syn 3.0.9",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2206,9 +2206,9 @@ dependencies = [
 
 [[package]]
 name = "etag-write"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16a7352801302969f6b33fd0a8252ceb3f4ec53e5d7f2ce2497cfc8407b26bf2"
+checksum = "fd7d1f3d672fd3ffad9529abf2685491916412fae9e71a7eb2111dd80c13baa9"
 dependencies = [
  "sha2 0.10.9",
  "thiserror 2.0.21",
@@ -5869,9 +5869,9 @@ checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
 
 [[package]]
 name = "path-guard"
-version = "0.3.2"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a1007b092e15068cd406be0dbdf41daa37f1449b77195aa4d00f84d4abd0853"
+checksum = "42b67b1ac128048e301bebb00fbf98b7e9d99a2616d5752adccb42ab1c57efac"
 dependencies = [
  "thiserror 2.0.21",
 ]
@@ -7985,9 +7985,9 @@ dependencies = [
 
 [[package]]
 name = "slug-collate"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f76aeebff259347be3d82d3dbbdcc1159325f31fccc8d73f0897aa10a8dc3f9"
+checksum = "6f9d109256bb1d176d0201be4a2a0c4c9c7dfdcf6574b9a0c9566e6a5f55bc77"
 dependencies = [
  "unicode-normalization",
 ]
@@ -11156,9 +11156,9 @@ checksum = "7a5a4b21e1a62b67a2970e6831bc091d7b87e119e7f9791aef9702e3bef04448"
 
 [[package]]
 name = "yaml-splice"
-version = "0.3.2"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b7f7104a4af3f2dce67f3a3fa525c58a586e321f7c49f0e3c8992762d625aa9"
+checksum = "e921536e6a1ea43164712064cd9d32bdcc448e17dbc950399cd0ca7eaef8b28d"
 dependencies = [
  "saphyr-parser",
  "serde_json",
