@@ -54,6 +54,27 @@ fetch() { # url dest
   fi
 }
 
+# The latest release that isn't a pre-release or a draft. github.com's
+# /releases/latest redirects to that release's tag page, and following the
+# redirect isn't an API call, so GitHub's limit on API calls without a token
+# (60 an hour per address, often used up on shared addresses: CI machines,
+# offices, VPNs) doesn't apply. The API is the fallback.
+latest() {
+  url="https://github.com/${REPO}/releases/latest"
+  if command -v curl >/dev/null 2>&1; then
+    where="$(curl -fsSLI --retry 3 -o /dev/null -w '%{url_effective}' "$url" 2>/dev/null)" || where=''
+  else
+    where="$(wget -S --spider "$url" 2>&1 | tr -d '\r' | sed -n 's/^ *[Ll]ocation: *//p' | tail -n 1)" || where=''
+  fi
+  v="$(printf '%s\n' "$where" | sed -n 's|.*/releases/tag/v\([^/?#[:space:]]*\).*|\1|p')"
+  if [ -n "$v" ]; then
+    printf '%s\n' "$v"
+    return 0
+  fi
+  fetch "https://api.github.com/repos/${REPO}/releases/latest" "$tmp/latest.json" || return 1
+  sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' "$tmp/latest.json" | head -n 1
+}
+
 sha256() {
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$1" | cut -d' ' -f1
@@ -97,11 +118,8 @@ trap 'rm -rf "$tmp"' EXIT INT TERM
 download_base="${SITROOM_DOWNLOAD_BASE:-https://github.com/${REPO}/releases/download}"
 
 if [ -z "$version" ]; then
-  # The latest release that isn't a pre-release or a draft.
-  fetch "https://api.github.com/repos/${REPO}/releases/latest" "$tmp/latest.json" \
-    || die "couldn't ask GitHub for the latest release; pass --version"
-  version="$(sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' "$tmp/latest.json" | head -n 1)"
-  [ -n "$version" ] || die "found no release; pass --version"
+  version="$(latest)" || version=''
+  [ -n "$version" ] || die "couldn't find the latest release; pass --version"
 fi
 
 base="${download_base}/v${version}"
